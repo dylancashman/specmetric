@@ -1,5 +1,6 @@
 import uuid
 from collections import deque
+import pandas as pd
 
 FUNCTION_PREFERENCES = {
   'vector_sum': {
@@ -8,15 +9,24 @@ FUNCTION_PREFERENCES = {
     'mark_priority': [
       {
         'input_data_mark': 'area',
-        'output_data_mark': 'space_filling'
+        'output_data_mark': 'space_filling',
+        'channels': [
+          {
+            'channel': 'area',
+            'field': 'value'
+          }
+        ]
       },
       {
         'input_data_mark': 'line',
         'output_data_mark': 'stacked_line'
+        'channels': [
+          {
+            'channel': 'y',
+            'field': 'value',        
+          }
+        ]
       }
-    ],
-    'inheritance_rules': [
-      ''
     ]
   },
   'scalar_sum': {
@@ -151,22 +161,27 @@ FUNCTION_PREFERENCES = {
     'input_data_type': 'vector',
     'output_data_type': 'scalar',
     'mark_priority': [
-      'input_data_mark': 'any',
-      'output_data_mark': 'line',
-      'extra': [
-        'show_distribution'
-      ]
+      {
+
+        'input_data_mark': 'any',
+        'output_data_mark': 'line',
+        'extra': [
+          'show_distribution'
+        ]
+      }
     ]
   },
   'median': {
     'input_data_type': 'vector',
     'output_data_type': 'scalar',
     'mark_priority': [
-      'input_data_mark': 'any',
-      'output_data_mark': 'line',
-      'extra': [
-        'show_distribution'
-      ]
+      {
+        'input_data_mark': 'any',
+        'output_data_mark': 'line',
+        'extra': [
+          'show_distribution'
+        ]
+      }
     ]
   },
   'broadcast': {
@@ -192,24 +207,28 @@ FUNCTION_PREFERENCES = {
 
 FUNCTION_TYPES = list(FUNCTION_PREFERENCES.keys())
 
-FUNCTION_TYPES = [
-  'vector_sum',
-  'scalar_sum',
-  'vector_square',
-  'scalar_square',
-  'vector_square_root',
-  'scalar_square_root',
-  'vector_absolute',
-  'scalar_absolute',
-  'vector_difference',
-  'scalar_difference',
-  'ratio',
-  'mean',
-  'median',
-  'broadcast',
-  'scalar',
-  'vector'
-]
+class AltairRenderer:
+  """
+  AltairRenderer takes in a list of resolved specifications and produces 
+  a sequence of charts that should be cross-linked
+
+  specifications should also include the data needed to render the visualization
+  """
+
+  def __init__(self, resolved_specifications, data_dict):
+    self.resolved_specifications = resolved_specifications
+    self.data_dict = data_dict
+
+  def convert_to_charts(self):
+    for spec in resolved_specifications:
+      # Render altair chart, but make sure that we have all needed scales
+      # defined, including colors, since they will be shared.
+
+      # First, we build the data frame
+      data = pd.DataFrame(
+
+      )
+      chart = alt.Chart()
 
 class ComputationNode:
   """
@@ -264,6 +283,14 @@ class VisualizationRule:
     self.resolve_parent_type()
 
   def resolve_parent_type(self):
+    parent_preferences = FUNCTION_PREFERENCES[self.parent_type]
+    parent_input_data_type = parent_preferences['input_data_type']
+    parent_output_data_type = parent_preferences['output_data_type']
+    parent_mark_priority = parent_preferences['mark_priority']
+
+    # First, check if data types work
+    child_data_type = 
+    if self.preferences
 
 
 class VisualizationContainer:
@@ -279,29 +306,38 @@ class VisualizationContainer:
 
   def __init__(self, initial_node):
     self.computation_nodes = [initial_node]
-    self.parse_node_preferences()
-    self.preferences = {
-        'marks': [],
-        'channels': []
-    }
+    self.mark_type = 'point'
+    self.mark_encodings = []
+    self.preferences = {}
+    self.parse_initial_node_preferences()
 
-  def parse_node_preferences(self):
-    pass
+  def get_function_preferences(self):
+    return [FUNCTION_PREFERENCES[n.function_type] for n in self.computation_nodes]
+
+  def parse_initial_node_preferences(self):
+    self.preferences = self.get_function_preferences()[0]
+    if (len(self.preferences['mark_priority']) > 0):
+      preference = self.preferences['mark_priority'][0]
+      self.mark_type = preference['output_data_mark']
+      self.mark_encodings.append({
+        'channel': ,
+        'field': 
+        })
 
   def add_computation_nodes(node):
     self.computation_nodes.append(node)
 
   def parent_mergeable(self, parent_node):
     rule_match = VisualizationRule(
-      'child_preferences': self.preferences,
-      'parent_type': parent_node.function_type
+      preferences=self.preferences,
+      parent_type=parent_node.function_type
       )
-    return rule_match.valid()
+    return rule_match.valid
 
   def merge_parent(self, parent_node):
     rule_match = VisualizationRule(
-      'child_preferences': self.preferences,
-      'parent_type': parent_node.function_type
+      preferences=self.preferences,
+      parent_type=parent_node.function_type
     )
 
     self.preferences = rule_match.resolve_preferences()

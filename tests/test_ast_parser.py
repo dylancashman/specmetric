@@ -50,14 +50,22 @@ def test_parser_scalar_sum():
     parser.parse_computation_tree()
     vis_containers = parser.visualization_containers
 
-    # This should result in one visualization - a bar chart
+    # This should result in one visualization - a single stacked bar
     assert len(vis_containers) == 1
     assert len(vis_containers[0]) == 1
 
-    matched_nodes = vis_containers[0][0].computation_nodes
+    container = vis_containers[0][0]
+    matched_nodes = container.computation_nodes
     assert sum_node in matched_nodes
     assert a_node in matched_nodes
     assert b_node in matched_nodes
+
+    # visualization mark should be line
+    # summand channel should be color
+    # value channel should be position
+    assert container.mark_type == 'bar'
+    assert {'channel': 'y', 'field': 'value'} in container.mark_encodings
+    assert {'channel': 'color', 'field': 'summand'} in container.mark_encodings
 
 def test_parser_scatter():
     assert True == False
