@@ -19,7 +19,7 @@ FUNCTION_PREFERENCES = {
       },
       {
         'input_data_mark': 'line',
-        'output_data_mark': 'stacked_line'
+        'output_data_mark': 'stacked_line',
         'channels': [
           {
             'channel': 'y',
@@ -289,8 +289,8 @@ class VisualizationRule:
     parent_mark_priority = parent_preferences['mark_priority']
 
     # First, check if data types work
-    child_data_type = 
-    if self.preferences
+    # child_data_type = 
+    # if self.preferences
 
 
 class VisualizationContainer:
@@ -320,8 +320,8 @@ class VisualizationContainer:
       preference = self.preferences['mark_priority'][0]
       self.mark_type = preference['output_data_mark']
       self.mark_encodings.append({
-        'channel': ,
-        'field': 
+        'channel': '',
+        'field': ''
         })
 
   def add_computation_nodes(node):

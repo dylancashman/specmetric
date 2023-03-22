@@ -1,0 +1,10 @@
+expressions:
+  vector_sum:
+    input_data_type: vector
+    output_data_type: scalar
+    mark_priority:
+      - input_data_mark: area
+        output_data_mark: space_filling
+        channels:
+          - channel: area
+            field: value

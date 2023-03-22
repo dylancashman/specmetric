@@ -1,2 +1,6 @@
 pandas
 altair
+pytest
+pyyaml
+scikit-learn
+numpy
