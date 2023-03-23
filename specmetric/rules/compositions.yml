@@ -1,11 +1,10 @@
 compositions:
-  child_rules:
-    scalar:
-      matched_parents:
-        any:
-          composition_rules: []
-    vector:
-      matched_parents:
-        any:
-          composition_rules: []
-    
+#   spacefilling:
+#     compatible_children:
+#       - 
+#   single_stacked_bar:
+#     compatible_children: []
+#   bar_chart_diff:
+#     compatible_children:
+#       - spacefilling:
+#         child

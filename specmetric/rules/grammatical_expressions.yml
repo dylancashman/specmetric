@@ -2,64 +2,42 @@ expressions:
   vector_sum:
     input_data_type: vector
     output_data_type: scalar
-    mark_priority:
-      - input_data_mark: area
-        output_data_mark: area
-        channel_priorities: ["space_fill"]
-        channels:
-          - channel: area
-            field: value
+    valid_visualization: spacefilling
   scalar_sum:
     input_data_type: scalar
     output_data_type: scalar
-    output_categorize: true
-    mark_priority:
-      - input_data_mark: area
-        output_data_mark: area
-        channel_priorities: ["x", "y"]
-      - input_data_mark: line
-        output_data_mark: line
-        channel_priorities: ["y", "x"]
+    valid_visualization: single_stacked_bar
   vector_diff:
     input_data_type: vector
     output_data_type: vector
-    mark_priority:
-      - input_data_mark: any
-        output_data_mark: line
-  vector_diff:
+    valid_visualization: scatter_y_equals_x
+    output_encoding_config:
+      mark: line
+  vector_square:
     input_data_type: vector
     output_data_type: vector
-    mark_priority:
-      - input_data_mark: any
-        output_data_mark: line
+    output_encoding_config:
+      mark: square
+  scalar_diff:
+    input_data_type: scalar
+    output_data_type: scalar
+    valid_visualization: bar_chart_diff
   scalar:
     input_data_type: any
     output_data_type: scalar
-    mark_priority:
-      - input_data_mark: any
-        output_data_mark: area
-        channel_priorities: ["size"]
-      - input_data_mark: any
-        output_data_mark: line
-        channel_priorities: ["length"]
-      - input_data_mark: any
-        output_data_mark: point
-        channel_priorities: ["x", "y"]
+    output_encoding_config:
+      mark: any
   vector:
     input_data_type: any
     output_data_type: vector
-    mark_priority:
-      - input_data_mark: any
-        output_data_mark: point
-        channel_priorities: ["x", "y"]
+    output_encoding_config:
+      mark: any
   mean:
     input_data_type: vector
     output_data_type: scalar
-    mark_priority:
-      - input_data_mark: point
-        output_data_mark: line
-        channel_priorities: ["tied"]
+    output_encoding_config:
+      mark: line
+      channel: input_tied
   broadcast:
     input_data_type: scalar
     output_data_type: vector
-    mark_priority: []
