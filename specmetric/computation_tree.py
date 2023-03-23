@@ -9,19 +9,15 @@ class ComputationNode:
   instances
   """
 
-  def __init__(self, name, parent_node, function_type, children=None, input_data=None, output_data=None):
+  def __init__(self, name, parent_node, function_type, input_data=None, output_data=None):
     self.name = name
     self.function_type = function_type
     self.uuid = uuid.uuid4()
 
-    if parent_node and not isinstance(parent_node, str):
-      self.parent_node = parent_node.uuid
-    else:
+    if parent_node:
       self.parent_node = parent_node
+      self.parent_node.add_child(self)
 
-    if children is None:
-      children = []
-    
     if input_data is None:
       input_data = []
 
@@ -30,7 +26,7 @@ class ComputationNode:
 
     self.input_data = input_data
     self.output_data = output_data
-    self.children = children
+    self.children = []
 
   def set_parent(self, node_id):
     self.parent_node = node_id

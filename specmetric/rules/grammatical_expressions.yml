@@ -4,7 +4,62 @@ expressions:
     output_data_type: scalar
     mark_priority:
       - input_data_mark: area
-        output_data_mark: space_filling
+        output_data_mark: area
+        channel_priorities: ["space_fill"]
         channels:
           - channel: area
             field: value
+  scalar_sum:
+    input_data_type: scalar
+    output_data_type: scalar
+    output_categorize: true
+    mark_priority:
+      - input_data_mark: area
+        output_data_mark: area
+        channel_priorities: ["x", "y"]
+      - input_data_mark: line
+        output_data_mark: line
+        channel_priorities: ["y", "x"]
+  vector_diff:
+    input_data_type: vector
+    output_data_type: vector
+    mark_priority:
+      - input_data_mark: any
+        output_data_mark: line
+  vector_diff:
+    input_data_type: vector
+    output_data_type: vector
+    mark_priority:
+      - input_data_mark: any
+        output_data_mark: line
+  scalar:
+    input_data_type: any
+    output_data_type: scalar
+    mark_priority:
+      - input_data_mark: any
+        output_data_mark: area
+        channel_priorities: ["size"]
+      - input_data_mark: any
+        output_data_mark: line
+        channel_priorities: ["length"]
+      - input_data_mark: any
+        output_data_mark: point
+        channel_priorities: ["x", "y"]
+  vector:
+    input_data_type: any
+    output_data_type: vector
+    mark_priority:
+      - input_data_mark: any
+        output_data_mark: point
+        channel_priorities: ["x", "y"]
+  mean:
+    input_data_type: vector
+    output_data_type: scalar
+    mark_priority:
+      - input_data_mark: point
+        output_data_mark: line
+        channel_priorities: ["tied"]
+  broadcast:
+    input_data_type: scalar
+    output_data_type: vector
+    mark_priority: []

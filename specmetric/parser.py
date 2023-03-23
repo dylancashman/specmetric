@@ -1,4 +1,6 @@
 from specmetric.visualization_container import VisualizationContainer
+from specmetric.rules_config import compositions as _compositions
+from specmetric.rules_config import grammatical_expressions as _grammatical_expressions
 
 class ComputationTreeParser:
   """
@@ -8,7 +10,7 @@ class ComputationTreeParser:
   """
   # Class methods
 
-  def resolve_containers(parent_node, visualization_container_list):
+  def resolve_containers(parent_node, visualization_container_list, compositions=_compositions, grammatical_expressions=_grammatical_expressions):
     """
     Resolves 1 to n visualization containers (representing subgraphs)
     of computation graph into a list of m visualization containers.  Ideally
@@ -20,6 +22,7 @@ class ComputationTreeParser:
     - parent_node: ComputationNode representing the root of a subtree
     - visualization_container_list: VisualizationContainer[] - contains the
     resolved VisualizationContainer from each child of a given node
+    - compositions: set of grammar composition rules
 
     returns VisualizationContainer[] - a (ideally unitary) list of visualization
     containers that are valid to pass to our AltairRenderer
@@ -45,23 +48,21 @@ class ComputationTreeParser:
     # Need something that fixes encodings, i.e. scales, colors
     # Let's try it without that for now, and see what happens
     # Similarly let's forget about cross-linking for now and just get it working
-
-    print("parent_node: ", parent_node.uuid, " parent_conflict", parent_conflict, " and merged_child_containers is ", merged_child_containers)
     if parent_conflict:
-      return [merged_child_containers, VisualizationContainer(parent_node)]
+      return [merged_child_containers, VisualizationContainer(parent_node, compositions, grammatical_expressions)]
     else:
       return [merged_child_containers]
 
 
   # Instance methods
-  def __init__(self, computation_tree, node_dict, data_dict):
+  def __init__(self, computation_tree, compositions=_compositions, grammatical_expressions=_grammatical_expressions):
     self.computation_tree = computation_tree
     # The dag is implemented as a list of lists - it's really a linked list
     # but where each node could be 1 or more visualizations where we can't
     # agree on what encoding to use, so we make multiple visualizations
     self.visualization_containers = []
-    self.node_dict = node_dict
-    self.data_dict = data_dict
+    self.compositions = compositions
+    self.grammatical_expressions = grammatical_expressions
 
   def parse_computation_tree(self):
     """
@@ -90,13 +91,12 @@ class ComputationTreeParser:
       """
       if tree.is_leaf():
         # We are at a leaf, there is no former visualization to connect to
-        return [VisualizationContainer(tree)]
+        return [VisualizationContainer(tree, self.compositions, self.grammatical_expressions)]
       else:
         # if we are not at a leaf, we should have >0 children
         child_container_heads = []
         resolved_child_tails = []
-        for child_node_id in tree.children:
-          child_node = self.node_dict[child_node_id]
+        for child_node in tree.children:
           child_containers = parse_node(child_node)
 
           # head gets judged against parent
@@ -114,7 +114,7 @@ class ComputationTreeParser:
 
         # Then, we return the previous visualizations, and the visualization containers from
         # resolve_containers
-        return resolved_child_tails + ComputationTreeParser.resolve_containers(tree, child_container_heads)
+        return resolved_child_tails + ComputationTreeParser.resolve_containers(tree, child_container_heads, self.compositions, self.grammatical_expressions)
 
     self.visualization_containers = [parse_node(self.computation_tree)]
 

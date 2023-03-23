@@ -1,0 +1,11 @@
+compositions:
+  child_rules:
+    scalar:
+      matched_parents:
+        any:
+          composition_rules: []
+    vector:
+      matched_parents:
+        any:
+          composition_rules: []
+    

@@ -4,29 +4,30 @@ from sklearn import datasets, linear_model
 import numpy as np
 
 def test_parser_leaf():
-    leaf_node = ComputationNode('leaf_test', None, None)
-    parser = ComputationTreeParser(leaf_node)
+    leaf_node = ComputationNode('leaf_test', None, 'test')
+    grammatical_expressions = {
+        'test': {
+            'input_data_type': 'test',
+            'output_data_type': 'test',
+            'mark_priority': [
+            ]
+        }
+    }
+    parser = ComputationTreeParser(leaf_node, grammatical_expressions=grammatical_expressions)
     parser.parse_computation_tree()
     vis_containers = parser.visualization_containers
 
     assert len(vis_containers) == 1
     assert len(vis_containers[0]) == 1
-    assert vis_containers[0][0].computation_subgraph == leaf_node
+    assert vis_containers[0][0].computation_nodes[0] == leaf_node
 
 def test_parser_scalar_sum():
     a = 5
     b = 3
-    node_dict = {}
-    data_dict = {'a': a, 'b': b}
     sum_node = ComputationNode('sum', None, 'scalar_sum', input_data=['a', 'b'])
-    node_dict[sum_node.uuid] = sum_node
     a_node = ComputationNode('literal_a', sum_node, 'scalar', output_data=['a'])
-    node_dict[a_node.uuid] = a_node
     b_node = ComputationNode('literal_b', sum_node, 'scalar', output_data=['b'])
-    node_dict[b_node.uuid] = b_node
-    sum_node.add_child(a_node.uuid)
-    sum_node.add_child(b_node.uuid)
-    parser = ComputationTreeParser(sum_node, node_dict, data_dict)
+    parser = ComputationTreeParser(sum_node)
 
     parser.parse_computation_tree()
     vis_containers = parser.visualization_containers
