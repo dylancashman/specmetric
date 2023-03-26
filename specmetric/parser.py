@@ -49,7 +49,7 @@ class ComputationTreeParser:
     # Let's try it without that for now, and see what happens
     # Similarly let's forget about cross-linking for now and just get it working
     if parent_conflict:
-      return [merged_child_containers, VisualizationContainer(parent_node, compositions, grammatical_expressions)]
+      return [merged_child_containers, VisualizationContainer(parent_node, compositions=compositions, grammatical_expressions=grammatical_expressions)]
     else:
       return [merged_child_containers]
 
@@ -91,7 +91,7 @@ class ComputationTreeParser:
       """
       if tree.is_leaf():
         # We are at a leaf, there is no former visualization to connect to
-        return [VisualizationContainer(tree, self.compositions, self.grammatical_expressions)]
+        return [VisualizationContainer(tree, compositions=self.compositions, grammatical_expressions=self.grammatical_expressions)]
       else:
         # if we are not at a leaf, we should have >0 children
         child_container_heads = []

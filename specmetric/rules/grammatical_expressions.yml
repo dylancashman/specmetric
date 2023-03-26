@@ -22,6 +22,10 @@ expressions:
     input_data_type: scalar
     output_data_type: scalar
     valid_visualization: bar_chart_diff
+  scalar_ratio:
+    input_data_type: scalar
+    output_data_type: scalar
+    valid_visualization: bar_chart_comp
   scalar:
     input_data_type: any
     output_data_type: scalar
