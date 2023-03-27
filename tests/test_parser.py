@@ -24,30 +24,23 @@ def test_parser_leaf():
 def test_parser_scalar_sum():
     a = 5
     b = 3
-    sum_node = ComputationNode('sum', None, 'scalar_sum', input_data=['a', 'b'])
-    a_node = ComputationNode('literal_a', sum_node, 'scalar', output_data=['a'])
-    b_node = ComputationNode('literal_b', sum_node, 'scalar', output_data=['b'])
+    sum_node = ComputationNode('sum', None, 'scalar_sum', input_data=['a', 'b'], output_data='aplusb')
+    a_node = ComputationNode('literal_a', sum_node, 'scalar', output_data='a')
+    b_node = ComputationNode('literal_b', sum_node, 'scalar', output_data='b')
     parser = ComputationTreeParser(sum_node)
 
     parser.parse_computation_tree()
     vis_containers = parser.visualization_containers
-
+    print(vis_containers)
     # This should result in one visualization - a single stacked bar
     assert len(vis_containers) == 1
     assert len(vis_containers[0]) == 1
 
     container = vis_containers[0][0]
-    matched_nodes = container.computation_nodes
-    assert sum_node in matched_nodes
-    assert a_node in matched_nodes
-    assert b_node in matched_nodes
 
-    # visualization mark should be line
-    # summand channel should be color
-    # value channel should be position
-    assert container.mark_type == 'bar'
-    assert {'channel': 'y', 'field': 'value'} in container.mark_encodings
-    assert {'channel': 'color', 'field': 'summand'} in container.mark_encodings
+    assert container.valid_chart == 'single_stacked_bar'
+    assert 'a' in container.encodings
+    assert 'b' in container.encodings
 
 def test_parser_scatter():
     assert True == False
@@ -90,7 +83,7 @@ def test_parser_r2():
     ss_res = np.sum(y_i_minus_y_hat_i_squared)
     ss_tot = np.sum(y_i_minus_y_bar_squared)
     one = 1
-    ss_res_ss_tot_ratio = ss_res / ss_sum
+    ss_res_ss_tot_ratio = ss_res / ss_tot
     r2 = one - ss_res_ss_tot_ratio
     minus_scalar = ComputationNode('minus_scalar', None, 'scalar_difference', input_data=['one', 'ss_res_ss_tot_ratio'], output_data=['r2'])
     one = ComputationNode('scalar_literal', minus_scalar, 'scalar', input_data=[], output_data=['one'])

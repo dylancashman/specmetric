@@ -2,6 +2,7 @@ from specmetric.renderer import AltairRenderer
 from altair import Chart
 
 def test_convert_to_charts():
+	assert True == False
 	specs = {}
 	data_dict = {}
 	r = AltairRenderer(specs, data_dict)

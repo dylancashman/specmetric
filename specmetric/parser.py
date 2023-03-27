@@ -35,23 +35,30 @@ class ComputationTreeParser:
     each one using the different mark definition, and with different colors
     """
     # greedy search, swallow up list
-    merged_child_containers = []
-    parent_conflict = False
+    unmerged_child_containers = []
+    print("in resolve_containers, len(visualization_container_list) is ", len(visualization_container_list))
+    print("visualization_container_list is ", visualization_container_list)
+    print("the parent_node is ", parent_node)
+    parent_container = VisualizationContainer(parent_node, compositions=compositions, grammatical_expressions=grammatical_expressions)
     while(len(visualization_container_list) > 0):
       child_container = visualization_container_list.pop()
+      print("here, child_container is ", child_container)
+      print("and its valid_chart is ", child_container.valid_chart)
       if child_container.parent_mergeable(parent_node):
-        merged_child_containers.append(child_container.merge_parent(parent_node))
+        print("it was mergeable")
+        child_container.merge_parent(parent_node)
+        # The child container has invaded the parent container and taken over
+        parent_container = child_container
       else:
-        merged_child_containers.append(child_container)
-        parent_conflict = True
+        print("it was not mergeable")
+        unmerged_child_containers.append(child_container)
 
+    print("at the end, the parent_container has chart", parent_container.valid_chart)
     # Need something that fixes encodings, i.e. scales, colors
     # Let's try it without that for now, and see what happens
     # Similarly let's forget about cross-linking for now and just get it working
-    if parent_conflict:
-      return [merged_child_containers, VisualizationContainer(parent_node, compositions=compositions, grammatical_expressions=grammatical_expressions)]
-    else:
-      return [merged_child_containers]
+    unmerged_child_containers.append(parent_container)
+    return unmerged_child_containers
 
 
   # Instance methods
@@ -114,6 +121,7 @@ class ComputationTreeParser:
 
         # Then, we return the previous visualizations, and the visualization containers from
         # resolve_containers
+        print("resolved_child_tails is ", resolved_child_tails)
         return resolved_child_tails + ComputationTreeParser.resolve_containers(tree, child_container_heads, self.compositions, self.grammatical_expressions)
 
     self.visualization_containers = [parse_node(self.computation_tree)]

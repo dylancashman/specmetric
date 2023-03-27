@@ -23,3 +23,10 @@ class AltairRenderer:
       )
       chart = alt.Chart()
 
+  def calculate_spacefilling_coords(self):
+    # Need to check for offset
+    # offset: tied-{{var_name}}
+    # The var_name should correspond to a particular mark with an x and a y.
+    # The offset gets applied by being added to each of the x,y,x2,y2 of 
+    # spacefilling coords
+    pass
