@@ -43,10 +43,25 @@ def test_parser_scalar_sum():
     assert 'b' in container.encodings
 
 def test_parser_scatter():
-    assert True == False
+    a = [3, 5, 2]
+    b = [1, 1, 2]
+    diff_node = ComputationNode('diff', None, 'vector_diff', input_data=['a', 'b'], output_data='aminusb')
+    a_node = ComputationNode('literal_a', diff_node, 'vector', output_data='a')
+    b_node = ComputationNode('literal_b', diff_node, 'vector', output_data='b')
+    parser = ComputationTreeParser(diff_node)
 
-def test_parser_multiple_containers():
-    assert True == False
+    parser.parse_computation_tree()
+    vis_containers = parser.visualization_containers
+    print(vis_containers)
+    # This should result in one visualization - a single scatter_y_equals_x
+    assert len(vis_containers) == 1
+    assert len(vis_containers[0]) == 1
+
+    container = vis_containers[0][0]
+
+    assert container.valid_chart == 'scatter_y_equals_x'
+    assert 'a' in container.encodings
+    assert 'b' in container.encodings
 
 def test_parser_r2():
     # Load the diabetes dataset
@@ -96,5 +111,19 @@ def test_parser_r2():
     vector_difference_residuals = ComputationNode('vector_difference_residuals', square_residuals, 'vector_difference', input_data=['y_i', 'y_hat_i'], output_data=['y_i_minus_y_hat_i'])
     broadcast = ComputationNode('broadcast_mean', vector_difference_variances, 'broadcast', input_data=['y_bar_scalar', 'y_i'], output_data=['y_bar_vector'])
     mean_y = ComputationNode('mean_y', broadcast, 'mean', input_data=['y_i'], output_data=['y_bar_scalar'])
+
+    parser = ComputationTreeParser(minus_scalar)
+    parser.parse_computation_tree()
+    vis_containers = parser.visualization_containers
+    print(vis_containers)
+    # This should result in one visualization - a single scatter_y_equals_x
+    assert len(vis_containers) == 1
+    assert len(vis_containers[0]) == 1
+
+    container = vis_containers[0][0]
+
+    assert container.valid_chart == 'scatter_y_equals_x'
+    assert 'a' in container.encodings
+    assert 'b' in container.encodings
 
     assert True == False
