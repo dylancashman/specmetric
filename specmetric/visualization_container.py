@@ -1,6 +1,7 @@
 from specmetric.rule_resolver import VisualizationRule
 from specmetric.rules_config import compositions as _compositions
 from specmetric.rules_config import grammatical_expressions as _grammatical_expressions
+import json
 
 class VisualizationContainer:
   """
@@ -10,14 +11,32 @@ class VisualizationContainer:
   its corresponding computation nodes.
   """  
 
-  def __init__(self, initial_node, valid_chart=None, compositions=_compositions, grammatical_expressions=_grammatical_expressions):
-    self.initial_node = initial_node
-    self.computation_nodes = [initial_node]
-    self.valid_chart = valid_chart
+  def __init__(self, root_node, compositions=_compositions, grammatical_expressions=_grammatical_expressions, lowest_depth=0):
+    self.root_node = root_node
+    self.computation_nodes = [root_node]
+    self.lowest_depth = lowest_depth
+    self.valid_chart = None
     self.encodings = {}
     self.compositions = compositions
     self.grammatical_expressions = grammatical_expressions
-    self.parse_node_preferences(initial_node)
+    self.parse_node_preferences(root_node, initial=True)
+    self.parse_chart(self.valid_chart, self.root_node.input_data, self.root_node.output_data)
+
+  # DEBUGGING PURPOSES
+  def __repr__(self):
+    return "(VisualizationContainer - valid_chart: {}, root_node: {}, lowest_depth: {})".format(self.valid_chart, self.root_node.name, self.lowest_depth)
+
+  def pp(self):
+    print("""
+    VisualizationContainer
+    ----------
+    valid_chart: {}
+    root_node: {}
+    lowest_depth: {}
+    computation_nodes: ({})
+    encodings:
+    {}
+    """.format(self.valid_chart, self.root_node.name, self.lowest_depth, [n.name for n in self.computation_nodes], json.dumps(self.encodings, indent=4)))
 
   def get_function_preferences(self, function_type):
     return self.grammatical_expressions[function_type]
@@ -25,8 +44,11 @@ class VisualizationContainer:
   def get_node_preferences(self, node):
     return self.get_function_preferences(node.function_type)
 
-  def parse_node_preferences(self, node):
+  def parse_node_preferences(self, node, initial=False):
     preferences = self.get_node_preferences(node)
+
+    if initial and ('valid_visualization' in preferences):
+      self.valid_chart = preferences['valid_visualization']
 
     # Get any encodings from the node
     if 'output_encoding_config' in preferences:
@@ -45,17 +67,21 @@ class VisualizationContainer:
         input_data[0],
         {
           'mark': 'square',
-          'channels': ['x', 'y', 'x2', 'y2']
+          'channels': 'vector-location'
         }
       )
       # Then, output data should be a scalar, encoded with an area
-      self.update_encoding(
-        output_data[0],
-        {
-          'mark': 'area',
-          'channels': ['x', 'y', 'x2', 'y2']
-        }
-      )
+      # self.update_encoding(
+      #   output_data,
+      #   {
+      #     'mark': 'area',
+      #     'channels': 'vector-location'
+      #   }
+      # )
+      # Actually, we don't explicitly encode the output in a spacefilling
+      # visualization - it is implicit.
+      # Although we might need to tell it about the value of the output...
+      # for scales.  Let's see.
 
       # The actual calculations of the values are calculated by the renderer
     elif chart_type == 'single_stacked_bar':
@@ -65,7 +91,7 @@ class VisualizationContainer:
         input_data[0],
         {
           'mark': 'area',
-          'channels': ['x', 'y', 'x2', 'y2']
+          'channels': 'scalar-location'
         }
       )
 
@@ -73,17 +99,17 @@ class VisualizationContainer:
         input_data[1],
         {
           'mark': 'area',
-          'channels': ['x', 'y', 'x2', 'y2']
+          'channels': 'scalar-location'
         }
       )
 
-      self.update_encoding(
-        output_data[0],
-        {
-          'mark': 'area',
-          'channels': ['x', 'y', 'x2', 'y2']
-        }
-      )
+      # self.update_encoding(
+      #   output_data,
+      #   {
+      #     'mark': 'area',
+      #     'channels': ['x', 'y', 'x2', 'y2']
+      #   }
+      # )
     elif chart_type == 'scatter_y_equals_x':
       # Inputs are points on scatterplot
       # outputs are lines
@@ -91,21 +117,21 @@ class VisualizationContainer:
         input_data[0],
         {
           'mark': 'point',
-          'channels': ['x', 'y']
+          'channels': 'vector-location'
         }
       )
       self.update_encoding(
         input_data[1],
         {
           'mark': 'point',
-          'channels': ['x', 'y']
+          'channels': 'vector-location'
         }
       )
       self.update_encoding(
-        output_data[0],
+        output_data,
         {
           'mark': 'line',
-          'channels': ['x', 'y', 'x2', 'y2']
+          'channels': 'vector-location'
         }
       )
     elif chart_type == 'bar_chart_diff':
@@ -115,23 +141,46 @@ class VisualizationContainer:
         input_data[0],
         {
           'mark': 'line',
-          'channels': ['x', 'y']
+          'channels': 'scalar-location'
         }
       )
       self.update_encoding(
         input_data[1],
         {
           'mark': 'line',
-          'channels': ['x', 'y']
+          'channels': 'scalar-location'
+        }
+      )
+      # self.update_encoding(
+      #   output_data,
+      #   {
+      #     'mark': 'line',
+      #     'channels': ['x', 'y']
+      #   }
+      # )
+    elif chart_type == 'bar_chart_comp':
+      self.update_encoding(
+        input_data[0],
+        {
+          'mark': 'line',
+          'channels': 'scalar-location'
         }
       )
       self.update_encoding(
-        output_data[0],
+        input_data[1],
         {
           'mark': 'line',
-          'channels': ['x', 'y']
+          'channels': 'scalar-location'
         }
       )
+      # self.update_encoding(
+      #   output_data,
+      #   {
+      #     'mark': 'line',
+      #     'channels': ['x', 'y']
+      #   }
+      # )
+
 
   def update_encoding(self, attribute_name, encoding_config, overwrite=True):
     if attribute_name not in self.encodings:
@@ -171,11 +220,11 @@ class VisualizationContainer:
     Returns true if there is a valid composition rule from child to parent, false otherwise
     """
     # For now, we hardcode the matches here
-    return (((parent_chart == 'spacefilling') and (child_chart == 'bar_chart_comp')) 
-            or ((parent_chart == 'spacefilling') and (child_chart == 'single_stacked_bar')) 
-            or ((parent_chart == 'spacefilling') and (child_chart == 'bar_chart_diff')))
+    return (((child_chart == 'spacefilling') and (parent_chart == 'bar_chart_comp')) 
+            or ((child_chart == 'spacefilling') and (parent_chart == 'single_stacked_bar')) 
+            or ((child_chart == 'spacefilling') and (parent_chart == 'bar_chart_diff')))
 
-  def merge_chart_types(self, parent_node, child_node):
+  def merge_chart_types(self, parent_node):
     """
     Handles all the logic of merging chart types. 
     1. Set's the valid chart variable
@@ -184,27 +233,26 @@ class VisualizationContainer:
 
     # For now, we hardcode the matches here
     parent_preferences = self.get_node_preferences(parent_node)
-    child_preferences = self.get_node_preferences(child_node)
-    parent_chart = parent_preferences.get('valid_chart')
-    child_chart = child_preferences.get('valid_chart')
-
+    child_encodings = self.encodings
+    parent_chart = parent_preferences.get('valid_visualization')
+    child_chart = self.valid_chart
+    print("parent_node.name is ", parent_node.name, " parent_node is ", parent_node.function_type, ".  child root is ", self.root_node.name, " merging chart types ", parent_chart, " and ", child_chart)
     # what is the resulting chart, and what encodings do we need
-    if ((parent_chart == 'spacefilling') and (child_chart == 'bar_chart_comp')):
-      self.merge_spacefilling_bar_chart_comp(parent_node, child_node)
-    elif ((parent_chart == 'spacefilling') and (child_chart == 'single_stacked_bar')):
-      self.merge_spacefilling_single_stacked_bar(parent_node, child_node)
-    elif ((parent_chart == 'spacefilling') and (child_chart == 'bar_chart_diff')):
-      self.merge_spacefilling_bar_chart_diff(parent_node, child_node)
+    if ((child_chart == 'spacefilling') and (parent_chart == 'bar_chart_comp')):
+      self.merge_spacefilling_bar_chart_comp(parent_node, self.root_node)
+    elif ((child_chart == 'spacefilling') and (parent_chart == 'single_stacked_bar')):
+      self.merge_spacefilling_single_stacked_bar(parent_node, self.root_node)
+    elif ((child_chart == 'spacefilling') and (parent_chart == 'bar_chart_diff')):
+      self.merge_spacefilling_bar_chart_diff(parent_node, self.root_node)
 
   def merge_spacefilling_bar_chart_comp(self, bar_chart_node, spacefilling_node):
     self.valid_chart = 'bar_chart_comp'
     # building a more complicated bar chart comp
-
+    print("should be spacefilling barchart comp")
     # The spacefilling areas need to get an offset so they appear in the barchart
-    spacefilling_var = spacefilling_node['output_data']
-    bar_chart_var = bar_chart_node['output_data']
+    spacefilling_var = spacefilling_node.output_data
+    bar_chart_var = bar_chart_node.output_data
 
-    spacefilling_params = self.encodings[spacefilling_var]
     self.update_encoding(
       spacefilling_var,
       {
@@ -218,10 +266,9 @@ class VisualizationContainer:
     self.valid_chart = 'single_stacked_bar'
     
     # The spacefilling areas need to get an offset so they appear in the single bar
-    spacefilling_var = spacefilling_node['output_data']
-    bar_var = bar_node['output_data']
+    spacefilling_var = spacefilling_node.output_data
+    bar_var = bar_node.output_data
 
-    spacefilling_params = self.encodings[spacefilling_var]
     self.update_encoding(
       spacefilling_var,
       {
@@ -235,10 +282,9 @@ class VisualizationContainer:
     self.valid_chart = 'bar_chart_diff'
 
     # The spacefilling areas need to get an offset so they appear in the corresponding bars
-    spacefilling_var = spacefilling_node['output_data']
-    bar_chart_var = bar_chart_node['output_data']
+    spacefilling_var = spacefilling_node.output_data
+    bar_chart_var = bar_chart_node.output_data
 
-    spacefilling_params = self.encodings[spacefilling_var]
     self.update_encoding(
       spacefilling_var,
       {
@@ -267,12 +313,12 @@ class VisualizationContainer:
     parent_valid_chart = parent_preferences.get('valid_visualization')
 
     # get self valid_chart
-    child_valid_chart = self.valid_chart
 
     # get the base parent chart preferences
     self.parse_node_preferences(parent_node)
-    # print("child_valid_chart is ", child_valid_chart)
-    # print("parent_valid_chart is ", parent_valid_chart)
+    child_valid_chart = self.valid_chart
+    print("child_valid_chart is ", child_valid_chart)
+    print("parent_valid_chart is ", parent_valid_chart)
 
     # check condition 1
     if not parent_valid_chart:
@@ -288,13 +334,16 @@ class VisualizationContainer:
       if self.chart_reqs_met(parent_node):
         self.valid_chart = parent_valid_chart
         # print("reqs were met")
-        self.parse_chart(parent_valid_chart, parent_node.input_data, parent_node.output_data)
+        # self.parse_chart(parent_valid_chart, parent_node.input_data, parent_node.output_data)
         # print(" OK, and now what is my valid chart?  ", self.valid_chart)
     # then condition 3
     else:
       #  get resulting chart, set valid chart, update preferences, etc.
-      merge_chart_types(parent_preferences, self.preferences) 
+      self.merge_chart_types(parent_node) 
   
+  def add_node(self, node):
+    self.computation_nodes.append(node)
+
   def chart_reqs_met(self, parent_node):
     # Check if the input data from the valid_chart type of the parent
     # is all marked to be encoded, i.e. it should be visualized

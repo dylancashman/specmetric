@@ -10,7 +10,7 @@ class ComputationTreeParser:
   """
   # Class methods
 
-  def resolve_containers(parent_node, visualization_container_list, compositions=_compositions, grammatical_expressions=_grammatical_expressions):
+  def resolve_containers(parent_node, visualization_container_list, compositions=_compositions, grammatical_expressions=_grammatical_expressions, parent_depth=0):
     """
     Resolves 1 to n visualization containers (representing subgraphs)
     of computation graph into a list of m visualization containers.  Ideally
@@ -39,21 +39,33 @@ class ComputationTreeParser:
     # print("in resolve_containers, len(visualization_container_list) is ", len(visualization_container_list))
     # print("visualization_container_list is ", visualization_container_list)
     # print("the parent_node is ", parent_node)
-    parent_container = VisualizationContainer(parent_node, compositions=compositions, grammatical_expressions=grammatical_expressions)
+    parent_container = VisualizationContainer(parent_node, compositions=compositions, grammatical_expressions=grammatical_expressions, lowest_depth=parent_depth)
     while(len(visualization_container_list) > 0):
       child_container = visualization_container_list.pop()
       # print("here, child_container is ", child_container)
       # print("and its valid_chart is ", child_container.valid_chart)
+      if child_container.lowest_depth < parent_container.lowest_depth:
+        child_container.lowest_depth = parent_container.lowest_depth
+
       if child_container.parent_mergeable(parent_node):
-        print("it was mergeable")
+        print("it was mergeable, parent_node is ", parent_node.name)
         child_container.merge_parent(parent_node)
         # The child container has invaded the parent container and taken over
+        # print("merging parent_node {} to child_container {}, and should be copying ")
+        for node in parent_container.computation_nodes:
+          child_container.add_node(node)
+
+        # we also need to copy over metadata from the parent
+        # this should really be all one subroutine, but thats for refactoring
+        child_container.encodings = child_container.encodings | parent_container.encodings
+        child_container.root_node = parent_container.root_node
+
         parent_container = child_container
       else:
         print("it was not mergeable")
         unmerged_child_containers.append(child_container)
 
-    # print("at the end, the parent_container has chart", parent_container.valid_chart)
+    print("at the end, the parent_container has chart", parent_container.valid_chart)
     # Need something that fixes encodings, i.e. scales, colors
     # Let's try it without that for now, and see what happens
     # Similarly let's forget about cross-linking for now and just get it working
@@ -86,7 +98,7 @@ class ComputationTreeParser:
     Returns a list of visualization containers.
     """
 
-    def parse_node(tree):
+    def parse_node(tree, depth=0):
       """
       pops the root node.  Determines if it can be added to the current 
       visualization container or if it needs to be the start of a new one.
@@ -97,19 +109,20 @@ class ComputationTreeParser:
       of visualizations for everything beneath tree, where the last element of
       the deque is the current visualization container.  
       """
+      new_depth = depth + 1
       if tree.is_leaf():
         # We are at a leaf, there is no former visualization to connect to
-        return [[VisualizationContainer(tree, compositions=self.compositions, grammatical_expressions=self.grammatical_expressions)]]
+        return [VisualizationContainer(tree, compositions=self.compositions, grammatical_expressions=self.grammatical_expressions, lowest_depth=new_depth)]
       else:
         # if we are not at a leaf, we should have >0 children
         child_container_heads = []
         resolved_child_tails = []
         for child_node in tree.children:
-          child_containers = parse_node(child_node)
+          child_containers = parse_node(child_node, depth=new_depth)
 
           # head gets judged against parent
           head_container = child_containers.pop()
-          child_container_heads = child_container_heads + head_container
+          child_container_heads.append(head_container)
 
           # tail goes into the stack together
           resolved_child_tails = resolved_child_tails + child_containers
@@ -122,11 +135,18 @@ class ComputationTreeParser:
 
         # Then, we return the previous visualizations, and the visualization containers from
         # resolve_containers
+        print("####### NEW DEPTH IS ", new_depth)
+        print("####### and parent node is ", tree.name)
+        print("resolved_child_tails is ", resolved_child_tails)
+        print(" and child_container_heads is ", child_container_heads)
+        # print("child_container_heads is ", child_container_heads)
         # print("resolved_child_tails is ", resolved_child_tails)
-        print("child_container_heads is ", child_container_heads)
+        resolved_child_tails = sorted(resolved_child_tails + ComputationTreeParser.resolve_containers(tree, child_container_heads, self.compositions, self.grammatical_expressions, parent_depth=new_depth), key=lambda x: (-1 * x.lowest_depth))
+        ## Somewhere in here is where we are supposed to propogate some encodings, since we have merged the two 
+        ## branches...
         print("resolved_child_tails is ", resolved_child_tails)
-        resolved_child_tails.append(ComputationTreeParser.resolve_containers(tree, child_container_heads, self.compositions, self.grammatical_expressions))
-        print("resolved_child_tails is ", resolved_child_tails)
+        print("pp resolved_child_tails is ", [x.pp() for x in resolved_child_tails])
+        # return sorted(resolved_child_tails, key=lambda x: x.lowest_depth)
         return resolved_child_tails
 
     self.visualization_containers = parse_node(self.computation_tree)
