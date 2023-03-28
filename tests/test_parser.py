@@ -43,10 +43,25 @@ def test_parser_scalar_sum():
     assert 'b' in container.encodings
 
 def test_parser_scatter():
-    assert True == False
+    a = [3, 5, 2]
+    b = [1, 1, 2]
+    diff_node = ComputationNode('diff', None, 'vector_diff', input_data=['a', 'b'], output_data='aminusb')
+    a_node = ComputationNode('literal_a', diff_node, 'vector', output_data='a')
+    b_node = ComputationNode('literal_b', diff_node, 'vector', output_data='b')
+    parser = ComputationTreeParser(diff_node)
 
-def test_parser_multiple_containers():
-    assert True == False
+    parser.parse_computation_tree()
+    vis_containers = parser.visualization_containers
+    print(vis_containers)
+    # This should result in one visualization - a single scatter_y_equals_x
+    assert len(vis_containers) == 1
+    assert len(vis_containers[0]) == 1
+
+    container = vis_containers[0][0]
+
+    assert container.valid_chart == 'scatter_y_equals_x'
+    assert 'a' in container.encodings
+    assert 'b' in container.encodings
 
 def test_parser_r2():
     # Load the diabetes dataset
@@ -85,16 +100,51 @@ def test_parser_r2():
     one = 1
     ss_res_ss_tot_ratio = ss_res / ss_tot
     r2 = one - ss_res_ss_tot_ratio
-    minus_scalar = ComputationNode('minus_scalar', None, 'scalar_difference', input_data=['one', 'ss_res_ss_tot_ratio'], output_data=['r2'])
-    one = ComputationNode('scalar_literal', minus_scalar, 'scalar', input_data=[], output_data=['one'])
-    ratio = ComputationNode('ratio', minus_scalar, 'ratio', input_data=['ss_res', 'ss_tot'], output_data=['ss_res_ss_tot_ratio'])
-    vector_sum_ss_tot = ComputationNode('ss_tot', ratio, 'vector_sum', input_data=['y_i_minus_y_bar_squared'], output_data=['ss_tot'])
-    vector_sum_ss_res = ComputationNode('ss_res', ratio, 'vector_sum',input_data=['y_i_minus_y_hat_i_squared'], output_data=['ss_res'])
-    square_variances = ComputationNode('square_variances', vector_sum_ss_tot, 'vector_square', input_data=['y_i_minus_y_bar'], output_data=['y_i_minus_y_bar_squared'])
-    square_residuals = ComputationNode('square_residuals', vector_sum_ss_res, 'vector_square', input_data=['y_i_minus_y_hat_i'], output_data=['y_i_minus_y_hat_i_squared'])
-    vector_difference_variances = ComputationNode('vector_difference_variances', square_variances, 'vector_difference', input_data=['y_i', 'y_bar'], output_data=['y_i_minus_y_bar'])
-    vector_difference_residuals = ComputationNode('vector_difference_residuals', square_residuals, 'vector_difference', input_data=['y_i', 'y_hat_i'], output_data=['y_i_minus_y_hat_i'])
-    broadcast = ComputationNode('broadcast_mean', vector_difference_variances, 'broadcast', input_data=['y_bar_scalar', 'y_i'], output_data=['y_bar_vector'])
-    mean_y = ComputationNode('mean_y', broadcast, 'mean', input_data=['y_i'], output_data=['y_bar_scalar'])
+    minus_scalar = ComputationNode('minus_scalar', None, 'scalar_diff', input_data=['one', 'ss_res_ss_tot_ratio'], output_data='r2')
+    one = ComputationNode('scalar_literal', minus_scalar, 'scalar', input_data=[], output_data='one')
+    ratio = ComputationNode('ratio', minus_scalar, 'scalar_ratio', input_data=['ss_res', 'ss_tot'], output_data='ss_res_ss_tot_ratio')
+    vector_sum_ss_tot = ComputationNode('ss_tot', ratio, 'vector_sum', input_data=['y_i_minus_y_bar_squared'], output_data='ss_tot')
+    vector_sum_ss_res = ComputationNode('ss_res', ratio, 'vector_sum',input_data=['y_i_minus_y_hat_i_squared'], output_data='ss_res')
+    square_variances = ComputationNode('square_variances', vector_sum_ss_tot, 'vector_square', input_data=['y_i_minus_y_bar'], output_data='y_i_minus_y_bar_squared')
+    square_residuals = ComputationNode('square_residuals', vector_sum_ss_res, 'vector_square', input_data=['y_i_minus_y_hat_i'], output_data='y_i_minus_y_hat_i_squared')
+    vector_difference_variances = ComputationNode('vector_difference_variances', square_variances, 'vector_diff', input_data=['y_i', 'y_bar'], output_data='y_i_minus_y_bar')
+    vector_difference_residuals = ComputationNode('vector_difference_residuals', square_residuals, 'vector_diff', input_data=['y_i', 'y_hat_i'], output_data='y_i_minus_y_hat_i')
+    broadcast = ComputationNode('broadcast_mean', vector_difference_variances, 'broadcast', input_data=['y_bar_scalar', 'y_i'], output_data='y_bar_vector')
+    mean_y = ComputationNode('mean_y', broadcast, 'mean', input_data=['y_i'], output_data='y_bar_scalar')
 
-    assert True == False
+    parser = ComputationTreeParser(minus_scalar)
+    parser.parse_computation_tree()
+    vis_containers = parser.visualization_containers
+
+    # This should result in 4 visualizations, but 3 sequences -
+    assert len(vis_containers) == 3
+
+    # First, a bar comparing 1 and the ratio
+    assert len(vis_containers[0]) == 1
+    container = vis_containers[0][0]
+
+    assert container.valid_chart == 'bar_chart_diff'
+    assert 'one' in container.encodings
+    assert 'ss_res_ss_tot_ratio' in container.encodings
+
+    # Then, a bar comparing numerator and denominator, with spacefilling marks
+    assert len(vis_containers[1]) == 1
+    container = vis_containers[1][0]
+
+    assert container.valid_chart == 'bar_chart_comp'
+    assert 'ss_res' in container.encodings
+    assert 'ss_tot' in container.encodings
+    assert 'y_i_minus_y_bar_squared' in container.encodings
+    assert 'y_i_minus_y_hat_i_squared' in container.encodings
+
+    # Then, a pair of scatterplots with squares for marks
+    assert len(vis_containers[2]) == 2
+    res_container = vis_containers[2][0]
+    tot_container = vis_containers[2][1]
+
+    assert res_container.valid_chart == 'scatter_y_equals_x'
+    assert tot_container.valid_chart == 'scatter_y_equals_x'
+    assert 'ss_res' in container.encodings
+    assert 'ss_tot' in container.encodings
+    assert 'y_i_minus_y_bar_squared' in container.encodings
+    assert 'y_i_minus_y_hat_i_squared' in container.encodings

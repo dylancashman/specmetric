@@ -36,7 +36,7 @@ class VisualizationContainer:
     """
     Adds the encodings for the selected chart type.  
     """
-    print("parsing chart with chart_type", chart_type)
+    # print("parsing chart with chart_type", chart_type)
     if chart_type == 'spacefilling':
       # input_data should be a vector name
       # We should take input data's encoding.  We won't have that just yet.
@@ -151,7 +151,7 @@ class VisualizationContainer:
     """
     # get parent valid_chart
     parent_preferences = self.get_function_preferences(parent_node.function_type)
-    parent_valid_chart = parent_preferences['valid_visualization']
+    parent_valid_chart = parent_preferences.get('valid_visualization')
 
     # get self valid_chart
     child_valid_chart = self.valid_chart
@@ -164,7 +164,7 @@ class VisualizationContainer:
       return True
     else:
     # check condition 3
-      return charts_mergeable(parent_valid_chart, child_valid_chart)
+      return self.charts_mergeable(parent_valid_chart, child_valid_chart)
 
   def charts_mergeable(self, parent_chart, child_chart):
     """
@@ -185,8 +185,8 @@ class VisualizationContainer:
     # For now, we hardcode the matches here
     parent_preferences = self.get_node_preferences(parent_node)
     child_preferences = self.get_node_preferences(child_node)
-    parent_chart = parent_preferences['valid_chart']
-    child_chart = child_preferences['valid_chart']
+    parent_chart = parent_preferences.get('valid_chart')
+    child_chart = child_preferences.get('valid_chart')
 
     # what is the resulting chart, and what encodings do we need
     if ((parent_chart == 'spacefilling') and (child_chart == 'bar_chart_comp')):
@@ -264,15 +264,15 @@ class VisualizationContainer:
     """
     # Get parent preferences, including valid chart
     parent_preferences = self.get_function_preferences(parent_node.function_type)
-    parent_valid_chart = parent_preferences['valid_visualization']
+    parent_valid_chart = parent_preferences.get('valid_visualization')
 
     # get self valid_chart
     child_valid_chart = self.valid_chart
 
     # get the base parent chart preferences
     self.parse_node_preferences(parent_node)
-    print("child_valid_chart is ", child_valid_chart)
-    print("parent_valid_chart is ", parent_valid_chart)
+    # print("child_valid_chart is ", child_valid_chart)
+    # print("parent_valid_chart is ", parent_valid_chart)
 
     # check condition 1
     if not parent_valid_chart:
@@ -284,12 +284,12 @@ class VisualizationContainer:
       # we only take the parent chart if it has valid data
       # # When inheriting valid chart from parent node, need to check that it is actually
       # # valid, i.e. the children have been picked for encoding
-      print("checking if reqs met")
+      # print("checking if reqs met")
       if self.chart_reqs_met(parent_node):
         self.valid_chart = parent_valid_chart
-        print("reqs were met")
+        # print("reqs were met")
         self.parse_chart(parent_valid_chart, parent_node.input_data, parent_node.output_data)
-        print(" OK, and now what is my valid chart?  ", self.valid_chart)
+        # print(" OK, and now what is my valid chart?  ", self.valid_chart)
     # then condition 3
     else:
       #  get resulting chart, set valid chart, update preferences, etc.
