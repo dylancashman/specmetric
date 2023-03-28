@@ -109,7 +109,7 @@ class ComputationTreeParser:
 
           # head gets judged against parent
           head_container = child_containers.pop()
-          child_container_heads.append(head_container)
+          child_container_heads = child_container_heads + head_container
 
           # tail goes into the stack together
           resolved_child_tails = resolved_child_tails + child_containers
@@ -123,9 +123,11 @@ class ComputationTreeParser:
         # Then, we return the previous visualizations, and the visualization containers from
         # resolve_containers
         # print("resolved_child_tails is ", resolved_child_tails)
-        resulting_container_list = resolved_child_tails + ComputationTreeParser.resolve_containers(tree, child_container_heads, self.compositions, self.grammatical_expressions)
-        print("resulting_container_list is ", resulting_container_list)
-        return resulting_container_list
+        print("child_container_heads is ", child_container_heads)
+        print("resolved_child_tails is ", resolved_child_tails)
+        resolved_child_tails.append(ComputationTreeParser.resolve_containers(tree, child_container_heads, self.compositions, self.grammatical_expressions))
+        print("resolved_child_tails is ", resolved_child_tails)
+        return resolved_child_tails
 
     self.visualization_containers = parse_node(self.computation_tree)
 
