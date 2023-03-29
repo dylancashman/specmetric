@@ -1,5 +1,6 @@
 import pandas as pd
 import altair as alt
+from specmetric.position_calculators.squarifier import squarify_within_bar
 
 class AltairRenderer:
   """
@@ -54,7 +55,7 @@ class AltairRenderer:
       scalar_data = pd.DataFrame()
       vector_data = pd.DataFrame()
       chart_data = pd.DataFrame()
-      print("spec.encodings is ", spec.encodings)
+      # print("spec.encodings is ", spec.encodings)
       for attr, encodings in spec.encodings.items():
         if 'scalar' in encodings['channels']:
           scalar_data[attr] = self.data_dict[attr]
@@ -62,35 +63,37 @@ class AltairRenderer:
         if 'vector' in encodings['channels']:
           vector_data[attr] = self.data_dict[attr]
 
+      charts = []
       # Then, need to calculate any additional attributes
       if (scalar_data.shape[0] > 0):
         # we put all scalar data into a single column
-        chart_data['scalar_values'] = scalar_data[[0]].values
+        chart_data['scalar_values'] = scalar_data.iloc[0].values
         # and add a second column with the names of the scalars
         # so that they can be colored categorically
         chart_data['scalar_names'] = scalar_data.columns.values
 
+        # # first, draw the scalar bars
+
+        charts.append(alt.Chart(scalar_data).mark_bar().encode(
+          x='scalar_names',
+          y='scalar_values'
+          ))
+
+      total_height = 400.0
+      # then, draw any vector encodings
+      max_total = vector_data.sum(axis=1).maximum()
 
       if (vector_data.shape[0] > 0):
-        # We might have to figure out the actual pixel locations
-
-      # scalar_altair_options = {}
-      # for attr, encodings in spec.encodings:
-
-      # # first, draw the scalar bars
-      chart = alt.Chart(scalar_data).mark_bar().encode(
-
-        )
-      return chart
-
-      # # then, draw any vector encodings
-
-
-  def calculate_spacefilling_coords(self):
-    # Need to check for offset
-    # offset: tied-{{var_name}}
-    # The var_name should correspond to a particular mark with an x and a y.
-    # The offset gets applied by being added to each of the x,y,x2,y2 of 
-    # spacefilling coords
-    pass
-
+        # We have a spacefilling visualization
+        # we use a square packing algorithm
+        # we have to calculate the offsets, however.
+        num_bars = vector_data.shape[1]
+        bar_width = 50
+        bar_padding = 30
+        for i in np.range(num_bars):
+          offset = ((i + 1) * padding) + (i * bar_width)
+          values = vector_data[[i]].values
+          total = np.sum(values)
+          bar_height = (total / max_total) * total_height
+          squares = squarify_within_bar(vector_data.index, values, bar_width, bar_height, pad=True):
+          

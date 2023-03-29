@@ -1,7 +1,7 @@
 import squarify
 import pandas as pd
 
-def squarify_within_bar(ids, values, width, height, pad=True):
+def squarify_within_bar(values, width, height, pad=True):
   """Uses the squarify package (https://github.com/laserson/squarify)
   to get coordinates for squares that fit within a bar of 
   width=width and height=height.  Returns df with locations and
