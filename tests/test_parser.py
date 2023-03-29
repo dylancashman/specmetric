@@ -97,6 +97,7 @@ def test_parser_r2():
     one = 1
     ss_res_ss_tot_ratio = ss_res / ss_tot
     r2 = one - ss_res_ss_tot_ratio
+
     minus_scalar = ComputationNode('minus_scalar', None, 'scalar_diff', input_data=['one', 'ss_res_ss_tot_ratio'], output_data='r2')
     one = ComputationNode('one', minus_scalar, 'scalar', input_data=[], output_data='one')
     ratio = ComputationNode('ratio', minus_scalar, 'scalar_ratio', input_data=['ss_res', 'ss_tot'], output_data='ss_res_ss_tot_ratio')
