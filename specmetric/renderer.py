@@ -1,6 +1,8 @@
 import pandas as pd
+import numpy as np
 import altair as alt
 from specmetric.position_calculators.squarifier import squarify_within_bar
+from collections import OrderedDict
 
 class AltairRenderer:
   """
@@ -46,54 +48,203 @@ class AltairRenderer:
     for spec in self.resolved_specifications:
       # Render altair chart, but make sure that we have all needed scales
       # defined, including colors, since they will be shared.
-      charts.append(self.build_chart(spec))
+      charts = charts + self.build_chart(spec)
 
     return charts
 
   def build_chart(self, spec):
-    if spec.valid_chart == 'bar_chart_diff':
-      scalar_data = pd.DataFrame()
-      vector_data = pd.DataFrame()
-      chart_data = pd.DataFrame()
-      # print("spec.encodings is ", spec.encodings)
-      for attr, encodings in spec.encodings.items():
-        if 'scalar' in encodings['channels']:
-          scalar_data[attr] = self.data_dict[attr]
+    charts = []
+    scalar_data = OrderedDict()
+    vector_data = OrderedDict()
 
-        if 'vector' in encodings['channels']:
-          vector_data[attr] = self.data_dict[attr]
+    for attr, encodings in spec.encodings.items():
+      if 'scalar' in encodings['channels']:
+        scalar_data[attr] = self.data_dict[attr]
 
-      charts = []
+      if 'vector' in encodings['channels']:
+        vector_data[attr] = self.data_dict[attr]
+
+    if (spec.valid_chart == 'bar_chart_diff') or (spec.valid_chart == 'bar_chart_comp'):
       # Then, need to calculate any additional attributes
-      if (scalar_data.shape[0] > 0):
+      if (len(scalar_data.keys()) > 0):
+        chart_data = pd.DataFrame()
         # we put all scalar data into a single column
-        chart_data['scalar_values'] = scalar_data.iloc[0].values
+        chart_data['scalar_values'] = list(scalar_data.values())
         # and add a second column with the names of the scalars
         # so that they can be colored categorically
-        chart_data['scalar_names'] = scalar_data.columns.values
+        chart_data['scalar_names'] = list(scalar_data.keys())
 
         # # first, draw the scalar bars
+        chart = alt.Chart(scalar_data).mark_bar()
 
-        charts.append(alt.Chart(scalar_data).mark_bar().encode(
+        chart.encode(
           x='scalar_names',
           y='scalar_values'
-          ))
+        )
+        charts.append(chart)
 
-      total_height = 400.0
-      # then, draw any vector encodings
-      max_total = vector_data.sum(axis=1).maximum()
+      if (len(vector_data.keys()) > 0):
+        total_height = 400.0
+        # then, draw any vector encodings
+        sums = [np.sum(d) for (_,d) in vector_data.items()]
+        max_total = max(sums)
 
-      if (vector_data.shape[0] > 0):
+        colors=['red', 'blue', 'green', 'black', 'orange', 'pink', 'purple', 'gray']
         # We have a spacefilling visualization
         # we use a square packing algorithm
         # we have to calculate the offsets, however.
-        num_bars = vector_data.shape[1]
+        num_bars = len(vector_data.keys())
+        original_column_names = list(vector_data.keys())
         bar_width = 50
         bar_padding = 30
-        for i in np.range(num_bars):
-          offset = ((i + 1) * padding) + (i * bar_width)
-          values = vector_data[[i]].values
+        total_bar_data = []
+        for i in np.arange(num_bars):
+          colname = original_column_names[i]
+          offset = ((i + 1) * bar_padding) + (i * bar_width)
+
+          values = vector_data[colname]
           total = np.sum(values)
           bar_height = (total / max_total) * total_height
-          squares = squarify_within_bar(vector_data.index, values, bar_width, bar_height, pad=True):
+          squares = squarify_within_bar(values, bar_width, bar_height, pad=True)
           
+          bar_data = pd.DataFrame()
+          bar_data['__x__'] = squares['x'] + offset
+          bar_data['__x2__'] = squares['x'] + offset + squares['dx']
+          bar_data['__y__'] = squares['y']
+          bar_data['__y2__'] = squares['y'] + squares['dy']
+          bar_data['color'] = colors[i]
+          total_bar_data.append(bar_data)
+
+        total_bar_df = pd.concat(total_bar_data)
+        ratio_plot = alt.Chart(total_bar_df).mark_rect()
+        ratio_plot.encode(
+          x=alt.X('__x__'),
+          y=alt.Y('__y__'),
+          x2=alt.X2('__x2__'),
+          y2=alt.Y2('__y2__'),
+          color=alt.Color('color', scale=None)
+        )
+        charts.append(ratio_plot)
+    elif (spec.valid_chart == 'spacefilling'):
+
+      if (len(vector_data.keys()) > 0):
+        total_height = 400.0
+        # then, draw any vector encodings
+        sums = [np.sum(d) for (_,d) in vector_data.items()]
+        max_total = max(sums)
+
+        colors=['red', 'blue', 'green', 'black', 'orange', 'pink', 'purple', 'gray']
+        # We have a spacefilling visualization
+        # we use a square packing algorithm
+        # we have to calculate the offsets, however.
+        num_bars = len(vector_data.keys())
+        original_column_names = list(vector_data.keys())
+        bar_width = 50
+        bar_padding = 30
+        total_bar_data = []
+        for i in np.arange(num_bars):
+          colname = original_column_names[i]
+          offset = ((i + 1) * bar_padding) + (i * bar_width)
+
+          values = vector_data[colname]
+          total = np.sum(values)
+          bar_height = (total / max_total) * total_height
+          squares = squarify_within_bar(values, bar_width, bar_height, pad=True)
+          
+          bar_data = pd.DataFrame()
+          bar_data['__x__'] = squares['x'] + offset
+          bar_data['__x2__'] = squares['x'] + offset + squares['dx']
+          bar_data['__y__'] = squares['y']
+          bar_data['__y2__'] = squares['y'] + squares['dy']
+          bar_data['color'] = colors[i]
+          total_bar_data.append(bar_data)
+
+        total_bar_df = pd.concat(total_bar_data)
+        ratio_plot = alt.Chart(total_bar_df).mark_rect()
+        ratio_plot.encode(
+          x=alt.X('__x__'),
+          y=alt.Y('__y__'),
+          x2=alt.X2('__x2__'),
+          y2=alt.Y2('__y2__'),
+          color=alt.Color('color', scale=None)
+        )
+        charts.append(ratio_plot)
+    elif spec.valid_chart == 'scatter_y_equals_x':
+      # Then, need to calculate any additional attributes
+      if (len(scalar_data.keys()) > 0):
+        # chart_data = pd.DataFrame()
+        # # we put all scalar data into a single column
+        # chart_data['scalar_values'] = list(scalar_data.values())
+        # # and add a second column with the names of the scalars
+        # # so that they can be colored categorically
+        # chart_data['scalar_names'] = list(scalar_data.keys())
+
+        # # first, draw the scalar bars
+        # chart = alt.Chart(scalar_data).mark_bar()
+
+        # chart.encode(
+        #   x='scalar_names',
+        #   y='scalar_values'
+        # )
+        # charts.append(chart)
+        # not sure what we do with the scalar encodings.  But it happens here.
+        # Basically, we should have a tied input (for things like the y=x line or
+        # the y=ybar line)
+        pass
+
+      if (len(vector_data.keys()) > 0):
+        # These are the scatters
+        vector_encodings = list(vector_data.keys())
+        num_encodings = len(vector_encodings)
+
+        scatter_data = pd.DataFrame()
+        print("spec is ", spec.pp())
+        for attr, encodings in spec.encodings.items():
+          if attr in vector_encodings:
+            # First, check for points
+            if (encodings['mark'] == 'point') and (encodings['preference'] == 'x'):
+              scatter_data['x'] = self.data_dict[attr]
+            elif (encodings['mark'] == 'point') and (encodings['preference'] == 'y'):
+              scatter_data['y'] = self.data_dict[attr]
+            elif (encodings['mark'] == 'line'):
+              scatter_data['linediff'] = self.data_dict[attr]
+            elif (encodings['mark'] == 'square'):
+              scatter_data['squarediff'] = self.data_dict[attr]
+
+        # Then, we build the charts
+        # First, the dots
+        dot_plot = alt.Chart(scatter_data).mark_point()
+        dot_plot.encode(
+          x=alt.X('x'),
+          y=alt.Y('y')
+        )
+        charts.append(dot_plot)
+
+        # Then, lines if they exist
+        if 'linediff' in scatter_data.columns.values:
+          scatter_data['liney2'] = scatter_data['y'] - scatter_data['linediff']
+          line_plot = alt.Chart(scatter_data).mark_line()
+          line_plot.encode(
+            x=alt.X('x'),
+            y=alt.Y('y'),
+            x2=alt.X2('x'),
+            y2=alt.Y2('liney2') # The diff is always the second operand
+          )
+          charts.append(line_plot)
+
+        # Then, squares if they exist
+        if 'squarediff' in scatter_data.columns.values:
+          scatter_data['squarex2'] = scatter_data['x'] + scatter_data['squarediff']
+          scatter_data['squarey2'] = scatter_data['y'] - scatter_data['squarediff']
+          square_plot = alt.Chart(scatter_data).mark_rect()
+          square_plot.encode(
+            x=alt.X('x'),
+            y=alt.Y('y'),
+            x2=alt.X2('squarex2'),
+            y2=alt.Y2('squarey2') 
+          )
+          charts.append(square_plot)
+
+    return charts
+
+

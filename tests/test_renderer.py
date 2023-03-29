@@ -42,6 +42,36 @@ def test_bar_chart_diff():
   assert chart.mark == 'bar'
   # assert labels are a and b
 
+def test_bar_chart_diff_squares():
+  specs = [
+    {
+      'valid_chart': 'bar_chart_diff',
+      'encodings': {
+        "a": {
+          "mark": "square",
+          "channels": "vector-location"
+        },
+        "b": {
+          "mark": "square",
+          "channels": "vector-location"
+        }
+      }
+    }
+  ]
+  data_dict = {
+    'a': [1, 4, 2, 5, 6, 9, 5, 20],
+    'b': [3, 1, 12]
+  }
+  vc = helper_containers_from_specs(specs)
+  r = AltairRenderer(vc, data_dict)
+  charts = r.convert_to_charts()
+  assert len(charts) == 1
+
+  chart = charts[0]
+  print(chart)
+  assert chart.mark == 'rect'
+  # assert labels are a and b
+
 def test_multiple_bar_chart():
   specs = [
     {
@@ -123,10 +153,20 @@ def test_scatter_y_equals_x():
       'encodings': {
         "a": {
           "mark": "point",
-          "channels": "vector-location"
+          "channels": "vector-location",
+          "preference": 'x'
         },
         "b": {
           "mark": "point",
+          "channels": "vector-location",
+          "preference": 'y'
+        },
+        "bline": {
+          "mark": "line",
+          "channels": "vector-location"
+        },
+        "bsquare": {
+          "mark": "square",
           "channels": "vector-location"
         }
 
@@ -135,15 +175,23 @@ def test_scatter_y_equals_x():
   ]
   data_dict = {
     'a': [1, 1, 3, 1, 2],
-    'b': [2, 1, 0, 1, -45]
+    'b': [2, 1, 0, 1, -45],
+    'bline': [1,2,3,4,5],
+    'bsquare': [3,2,3,5,6]
   }
   vc = helper_containers_from_specs(specs)
   r = AltairRenderer(vc, data_dict)
   charts = r.convert_to_charts()
-  assert len(charts) == 1
+  assert len(charts) == 3
 
   chart = charts[0]
   assert chart.mark == 'point'
+
+  chart = charts[1]
+  assert chart.mark == 'line'
+
+  chart = charts[2]
+  assert chart.mark == 'rect'
 
 def test_spacefilling():
   specs = [
@@ -167,7 +215,7 @@ def test_spacefilling():
   assert len(charts) == 1
 
   chart = charts[0]
-  assert chart.mark == 'square'
+  assert chart.mark == 'rect'
 
 
 

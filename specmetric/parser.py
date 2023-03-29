@@ -67,8 +67,14 @@ class ComputationTreeParser:
 
     print("at the end, the parent_container has chart", parent_container.valid_chart)
     # Need something that fixes encodings, i.e. scales, colors
-    # Let's try it without that for now, and see what happens
-    # Similarly let's forget about cross-linking for now and just get it working
+    # Similarly cross-linking
+    # Let's say that's the responsibility of the renderer.
+    # But we do need one more pass to figure out if anything is missing
+    # once we've merged in all the children.
+    # parent_container.validate_visualization()
+    # Let's see though, maybe we don't need it.
+
+
     unmerged_child_containers.append(parent_container)
     print("len(unmerged_child_containers) is ", len(unmerged_child_containers))
     return unmerged_child_containers

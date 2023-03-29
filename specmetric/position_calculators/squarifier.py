@@ -27,4 +27,4 @@ def squarify_within_bar(values, width, height, pad=True):
   else:
     rects = squarify.squarify(values, x, y, width, height)
 
-  return pd.DataFrame(data=rects, index=ids)
+  return pd.DataFrame(data=rects)
