@@ -30,13 +30,9 @@ expressions:
   scalar:
     input_data_type: any
     output_data_type: scalar
-    output_encoding_config:
-      mark: any
   vector:
     input_data_type: any
     output_data_type: vector
-    output_encoding_config:
-      mark: any
   mean:
     input_data_type: vector
     output_data_type: scalar

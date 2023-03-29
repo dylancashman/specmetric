@@ -183,6 +183,7 @@ class VisualizationContainer:
 
 
   def update_encoding(self, attribute_name, encoding_config, overwrite=True):
+    print("here, self.encodings is ", self.encodings, " and attribute_name is ", attribute_name)
     if attribute_name not in self.encodings:
       self.encodings[attribute_name] = {}
     self.encodings[attribute_name] = self.encodings[attribute_name] | encoding_config

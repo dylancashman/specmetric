@@ -1,4 +1,5 @@
 import pandas as pd
+import altair as alt
 
 class AltairRenderer:
   """
@@ -37,17 +38,48 @@ class AltairRenderer:
   def __init__(self, resolved_specifications, data_dict):
     self.resolved_specifications = resolved_specifications
     self.data_dict = data_dict
+    self.convert_to_charts()
 
   def convert_to_charts(self):
-    for spec in resolved_specifications:
+    charts = []
+    for spec in self.resolved_specifications:
       # Render altair chart, but make sure that we have all needed scales
       # defined, including colors, since they will be shared.
+      charts.append(self.build_chart(spec))
 
-      # First, we build the data frame
-      data = pd.DataFrame(
+    return charts
 
-      )
-      chart = alt.Chart()
+  def build_chart(self, spec):
+    if spec.valid_chart == 'bar_chart_diff':
+      scalar_data = pd.DataFrame()
+      vector_data = pd.DataFrame()
+      chart_data = pd.DataFrame()
+      print("spec.encodings is ", spec.encodings)
+      for attr, encodings in spec.encodings.items():
+        if 'scalar' in encodings['channels']:
+          scalar_data[attr] = self.data_dict[attr]
+
+        if 'vector' in encodings['channels']:
+          vector_data[attr] = self.data_dict[attr]
+
+      # Then, need to calculate any additional attributes
+      if (scalar_data.shape[0] > 0):
+
+
+
+      # if (vector_data.shape[0] > 0):
+
+      # scalar_altair_options = {}
+      # for attr, encodings in spec.encodings:
+
+      # # first, draw the scalar bars
+      chart = alt.Chart(scalar_data).mark_bar().encode(
+
+        )
+      return chart
+
+      # # then, draw any vector encodings
+
 
   def calculate_spacefilling_coords(self):
     # Need to check for offset
