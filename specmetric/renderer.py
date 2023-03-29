@@ -64,10 +64,15 @@ class AltairRenderer:
 
       # Then, need to calculate any additional attributes
       if (scalar_data.shape[0] > 0):
+        # we put all scalar data into a single column
+        chart_data['scalar_values'] = scalar_data[[0]].values
+        # and add a second column with the names of the scalars
+        # so that they can be colored categorically
+        chart_data['scalar_names'] = scalar_data.columns.values
 
 
-
-      # if (vector_data.shape[0] > 0):
+      if (vector_data.shape[0] > 0):
+        # We might have to figure out the actual pixel locations
 
       # scalar_altair_options = {}
       # for attr, encodings in spec.encodings:
