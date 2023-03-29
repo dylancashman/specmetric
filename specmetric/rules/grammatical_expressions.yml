@@ -18,6 +18,7 @@ expressions:
     output_data_type: vector
     output_encoding_config:
       mark: square
+      channels: input_tied
   scalar_diff:
     input_data_type: scalar
     output_data_type: scalar
@@ -29,13 +30,9 @@ expressions:
   scalar:
     input_data_type: any
     output_data_type: scalar
-    output_encoding_config:
-      mark: any
   vector:
     input_data_type: any
     output_data_type: vector
-    output_encoding_config:
-      mark: any
   mean:
     input_data_type: vector
     output_data_type: scalar
