@@ -44,14 +44,47 @@ class AltairRenderer:
 
   def convert_to_charts(self):
     charts = []
+    categorical_color_scale = alt.Scale(scheme='category10')
+    crosslinker = alt.selection_single(fields=['id'], on='mouseover', empty='none')
+
     for spec in self.resolved_specifications:
       # Render altair chart, but make sure that we have all needed scales
       # defined, including colors, since they will be shared.
-      charts = charts + self.build_chart(spec)
+      charts.append(self.build_chart(spec, categorical_color_scale, crosslinker))
 
-    return charts
+    return self.flatten_charts(charts)
 
-  def build_chart(self, spec):
+  def flatten_charts(self, charts):
+    # add (+) together second level charts, and union (|) the first level results
+    result_chart = None
+    for cs in charts:
+      curr = None
+      for c in cs:
+        if curr:
+          curr = curr + c
+        else:
+          curr = c
+
+      if result_chart:
+        result_chart = result_chart | curr
+      else:
+        result_chart = curr
+
+    return result_chart
+
+  # def resolve_colors(self, charts):
+  #   # go through charts backwards, the first time we find a color
+  #   # encoding for vectors, we apply that color encoding to each
+  #   # chart we find
+  #   color_encoding = None
+  #   for chart_group in reversed(charts):
+  #     for chart in chart_group:
+  #       if color_encoding and (type(color_encoding).__name__ is not "UndefinedType"): # brittle
+  #         chart.encoding.color = color_encoding
+  #       else: 
+  #         color_encoding = chart.encoding.color
+
+  def build_chart(self, spec, categorical_color_scale, crosslinker):
     charts = []
     scalar_data = OrderedDict()
     vector_data = OrderedDict()
@@ -59,7 +92,6 @@ class AltairRenderer:
     total_width = 400.0
     title = ''
 
-    # print("spec is ", spec)
     for attr, encodings in spec.encodings.items():
       if 'scalar' in encodings['channels']:
         scalar_data[attr] = self.data_dict[attr]
@@ -73,11 +105,9 @@ class AltairRenderer:
     if (spec.valid_chart == 'bar_chart_diff') or (spec.valid_chart == 'bar_chart_comp'):
       # Then, need to calculate any additional attributes
       bar_width = 150
-      bar_padding = 100
+      bar_padding = 50
 
       # First, make scale
-
-
       if (len(scalar_data.keys()) > 0):
         chart_data = pd.DataFrame()
         # we put all scalar data into a single column
@@ -111,7 +141,6 @@ class AltairRenderer:
         sums = [np.sum(d) for (_,d) in vector_data.items()]
         max_total = max(sums)
 
-        colors=['red', 'blue', 'green', 'black', 'orange', 'pink', 'purple', 'gray']
         # We have a spacefilling visualization
         # we use a square packing algorithm
         # we have to calculate the offsets, however.
@@ -132,7 +161,7 @@ class AltairRenderer:
           # However, we need to normalize things or else the
           # padding calculations break
           modulated_bar_height = 100
-          squares = squarify_within_bar(values, bar_width, modulated_bar_height, pad=True)
+          squares = squarify_within_bar(self.data_dict['ids'], values, bar_width, modulated_bar_height, pad=True)
           height_multiplier = total / modulated_bar_height
           
           bar_data = pd.DataFrame()
@@ -140,19 +169,24 @@ class AltairRenderer:
           bar_data['__x2__'] = squares['x'] + offset + squares['dx']
           bar_data['__y__'] = squares['y'] * height_multiplier
           bar_data['__y2__'] = (squares['y'] + squares['dy']) * height_multiplier
-          bar_data['color'] = colors[i]
+          bar_data['color'] = colname
+          bar_data['part of'] = scalar_keys[i]
+          bar_data['id'] = squares.index.values
+
           total_bar_data.append(bar_data)
 
         total_bar_df = pd.concat(total_bar_data)
 
         title = "Comparison of sum of {} and {}".format(vector_keys[0], vector_keys[1])
+        tooltip_columns= list(set(total_bar_df.columns.values) & set(['id', 'part']))
         ratio_plot = alt.Chart(total_bar_df).mark_rect(opacity=0.2).encode(
           x=alt.X('__x__', axis=alt.Axis(title=''), scale=alt.Scale(domain=[0,total_width])),
           y=alt.Y('__y__', axis=alt.Axis(title='magnitude')),
           x2=alt.X2('__x2__'),
           y2=alt.Y2('__y2__'),
-          color=alt.Color('color', scale=None)
-        ).properties(width=total_width, height=total_height, title=title)
+          color=alt.condition(crosslinker, alt.value('yellow'), alt.Color('color', scale=categorical_color_scale, legend=None)),
+          tooltip=tooltip_columns
+        ).properties(width=total_width, height=total_height, title=title).add_selection(crosslinker)
         charts.append(ratio_plot)
     elif (spec.valid_chart == 'spacefilling'):
 
@@ -162,7 +196,6 @@ class AltairRenderer:
         sums = [np.sum(d) for (_,d) in vector_data.items()]
         max_total = max(sums)
 
-        colors=['red', 'blue', 'green', 'black', 'orange', 'pink', 'purple', 'gray']
         # We have a spacefilling visualization
         # we use a square packing algorithm
         # we have to calculate the offsets, however.
@@ -185,7 +218,7 @@ class AltairRenderer:
           bar_data['__x2__'] = squares['x'] + offset + squares['dx']
           bar_data['__y__'] = squares['y']
           bar_data['__y2__'] = squares['y'] + squares['dy']
-          bar_data['color'] = colors[i]
+          bar_data['color'] = colname
           total_bar_data.append(bar_data)
 
         total_bar_df = pd.concat(total_bar_data)
@@ -194,7 +227,7 @@ class AltairRenderer:
           y=alt.Y('__y__'),
           x2=alt.X2('__x2__'),
           y2=alt.Y2('__y2__'),
-          color=alt.Color('color', scale=None)
+          color=alt.Color('color', scale=categorical_color_scale, legend=None)
         ).properties(width=total_width, height=total_height, title=title)
         charts.append(ratio_plot)
     elif spec.valid_chart == 'scatter_y_equals_x':
@@ -244,6 +277,10 @@ class AltairRenderer:
             elif (encodings['mark'] == 'square'):
               scatter_data['squarediff'] = np.sqrt(self.data_dict[attr])
               square_attrs.append(attr)
+              scatter_data['color'] = attr
+
+        if 'ids' in self.data_dict:
+          scatter_data['id'] = self.data_dict['ids']
 
         # Then, we build the charts
         # First, the dots
@@ -287,9 +324,16 @@ class AltairRenderer:
             x=alt.X('x', axis=alt.Axis(title=dot_attrs[0])),
             y=alt.Y('y', axis=alt.Axis(title=dot_attrs[1])),
             x2=alt.X2('squarex2'),
-            y2=alt.Y2('squarey2') 
-          ).properties(width=total_width, height=total_height, title=title)
+            y2=alt.Y2('squarey2'),
+            color=alt.condition(crosslinker, alt.value('yellow'), alt.Color('color', scale=categorical_color_scale, legend=None)),
+            tooltip=['id']
+          ).properties(width=total_width, height=total_height, title=title).add_selection(crosslinker)
           charts.append(square_plot)
+
+          #@todo - I can define a scale every time we have an input tied.  And the in chart gets the scale of its output, out chart gets the color of its input
+        #   color=alt.condition(crosslinker, alt.value('yellow'), alt.Color('color', scale=None)),
+        #   tooltip=tooltip_columns
+        # ).properties(width=total_width, height=total_height, title=title).add_selection(crosslinker)
 
           # realign the axes
           max_pixel = scatter_data[['x', 'y', 'squarex2', 'squarey2']].max().max() * 1.1
@@ -304,15 +348,15 @@ class AltairRenderer:
       )
       charts.append(y_equals_x_chart)
 
-    # put all the charts together, since they should share axes
-    resulting_chart = None
-    for chart in charts:
-      if resulting_chart == None:
-        resulting_chart = chart
-      else:
-        resulting_chart = resulting_chart + chart
+    # # put all the charts together, since they should share axes
+    # resulting_chart = None
+    # for chart in charts:
+    #   if resulting_chart == None:
+    #     resulting_chart = chart
+    #   else:
+    #     resulting_chart = resulting_chart + chart
 
-    charts = [resulting_chart]
+    # charts = [resulting_chart]
 
 
     return charts

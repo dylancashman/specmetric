@@ -1,5 +1,5 @@
 pandas
-altair
+altair=4
 pytest
 pyyaml
 scikit-learn

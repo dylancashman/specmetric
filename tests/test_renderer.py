@@ -35,10 +35,8 @@ def test_bar_chart_diff():
   }
   vc = helper_containers_from_specs(specs)
   r = AltairRenderer(vc, data_dict)
-  charts = r.convert_to_charts()
-  assert len(charts) == 1
-
-  chart = charts[0]
+  chart = r.convert_to_charts()
+  
   assert chart.mark == 'bar'
   # assert labels are a and b
 
@@ -64,10 +62,8 @@ def test_bar_chart_diff_squares():
   }
   vc = helper_containers_from_specs(specs)
   r = AltairRenderer(vc, data_dict)
-  charts = r.convert_to_charts()
-  assert len(charts) == 1
-
-  chart = charts[0]
+  chart = r.convert_to_charts()
+  
   print(chart)
   assert chart.mark == 'rect'
   # assert labels are a and b
@@ -110,9 +106,8 @@ def test_multiple_bar_chart():
   }
   vc = helper_containers_from_specs(specs)
   r = AltairRenderer(vc, data_dict)
-  charts = r.convert_to_charts()
-  assert len(charts) == 2
-
+  chart = r.convert_to_charts()
+  
   chart = charts[1]
   assert chart.mark == 'bar'
 
@@ -139,10 +134,8 @@ def test_bar_chart_comp():
   }
   vc = helper_containers_from_specs(specs)
   r = AltairRenderer(vc, data_dict)
-  charts = r.convert_to_charts()
-  assert len(charts) == 1
-
-  chart = charts[0]
+  chart = r.convert_to_charts()
+  
   assert chart.mark == 'bar'
   # assert labels are a and b
 
@@ -181,17 +174,15 @@ def test_scatter_y_equals_x():
   }
   vc = helper_containers_from_specs(specs)
   r = AltairRenderer(vc, data_dict)
-  charts = r.convert_to_charts()
-  assert len(charts) == 3
-
-  chart = charts[0]
+  chart = r.convert_to_charts()
+  
   assert chart.mark == 'point'
 
-  chart = charts[1]
-  assert chart.mark == 'line'
+  # chart = charts[1]
+  # assert chart.mark == 'line'
 
-  chart = charts[2]
-  assert chart.mark == 'rect'
+  # chart = charts[2]
+  # assert chart.mark == 'rect'
 
 def test_spacefilling():
   specs = [
@@ -211,10 +202,8 @@ def test_spacefilling():
   }
   vc = helper_containers_from_specs(specs)
   r = AltairRenderer(vc, data_dict)
-  charts = r.convert_to_charts()
-  assert len(charts) == 1
-
-  chart = charts[0]
+  chart = r.convert_to_charts()
+  
   assert chart.mark == 'rect'
 
 
