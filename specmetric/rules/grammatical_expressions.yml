@@ -39,7 +39,7 @@ expressions:
     output_data_type: scalar
     output_encoding_config:
       mark: line
-      channel: input_tied
+      channels: input_tied
   broadcast:
     input_data_type: scalar
     output_data_type: vector

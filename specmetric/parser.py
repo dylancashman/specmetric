@@ -48,7 +48,7 @@ class ComputationTreeParser:
         child_container.lowest_depth = parent_container.lowest_depth
 
       if child_container.parent_mergeable(parent_node):
-        print("it was mergeable, parent_node is ", parent_node.name)
+        # print("it was mergeable, parent_node is ", parent_node.name)
         child_container.merge_parent(parent_node)
         # The child container has invaded the parent container and taken over
         # print("merging parent_node {} to child_container {}, and should be copying ")
@@ -62,10 +62,10 @@ class ComputationTreeParser:
 
         parent_container = child_container
       else:
-        print("it was not mergeable")
+        # print("it was not mergeable")
         unmerged_child_containers.append(child_container)
 
-    print("at the end, the parent_container has chart", parent_container.valid_chart)
+    # print("at the end, the parent_container has chart", parent_container.valid_chart)
     # Need something that fixes encodings, i.e. scales, colors
     # Similarly cross-linking
     # Let's say that's the responsibility of the renderer.
@@ -76,7 +76,7 @@ class ComputationTreeParser:
 
 
     unmerged_child_containers.append(parent_container)
-    print("len(unmerged_child_containers) is ", len(unmerged_child_containers))
+    # print("len(unmerged_child_containers) is ", len(unmerged_child_containers))
     return unmerged_child_containers
 
 
@@ -141,17 +141,17 @@ class ComputationTreeParser:
 
         # Then, we return the previous visualizations, and the visualization containers from
         # resolve_containers
-        print("####### NEW DEPTH IS ", new_depth)
-        print("####### and parent node is ", tree.name)
-        print("resolved_child_tails is ", resolved_child_tails)
-        print(" and child_container_heads is ", child_container_heads)
+        # print("####### NEW DEPTH IS ", new_depth)
+        # print("####### and parent node is ", tree.name)
+        # print("resolved_child_tails is ", resolved_child_tails)
+        # print(" and child_container_heads is ", child_container_heads)
         # print("child_container_heads is ", child_container_heads)
         # print("resolved_child_tails is ", resolved_child_tails)
         resolved_child_tails = sorted(resolved_child_tails + ComputationTreeParser.resolve_containers(tree, child_container_heads, self.compositions, self.grammatical_expressions, parent_depth=new_depth), key=lambda x: (-1 * x.lowest_depth))
         ## Somewhere in here is where we are supposed to propogate some encodings, since we have merged the two 
         ## branches...
-        print("resolved_child_tails is ", resolved_child_tails)
-        print("pp resolved_child_tails is ", [x.pp() for x in resolved_child_tails])
+        # print("resolved_child_tails is ", resolved_child_tails)
+        # print("pp resolved_child_tails is ", [x.pp() for x in resolved_child_tails])
         # return sorted(resolved_child_tails, key=lambda x: x.lowest_depth)
         return resolved_child_tails
 

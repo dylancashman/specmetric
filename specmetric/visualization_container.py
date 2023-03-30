@@ -211,7 +211,7 @@ class VisualizationContainer:
 
 
   def update_encoding(self, attribute_name, encoding_config, overwrite=True):
-    print("here, self.encodings is ", self.encodings, " and attribute_name is ", attribute_name)
+    # print("here, self.encodings is ", self.encodings, " and attribute_name is ", attribute_name)
     if attribute_name not in self.encodings:
       self.encodings[attribute_name] = {}
     self.encodings[attribute_name] = self.encodings[attribute_name] | encoding_config
@@ -265,7 +265,7 @@ class VisualizationContainer:
     child_encodings = self.encodings
     parent_chart = parent_preferences.get('valid_visualization')
     child_chart = self.valid_chart
-    print("parent_node.name is ", parent_node.name, " parent_node is ", parent_node.function_type, ".  child root is ", self.root_node.name, " merging chart types ", parent_chart, " and ", child_chart)
+    # print("parent_node.name is ", parent_node.name, " parent_node is ", parent_node.function_type, ".  child root is ", self.root_node.name, " merging chart types ", parent_chart, " and ", child_chart)
     # what is the resulting chart, and what encodings do we need
     if ((child_chart == 'spacefilling') and (parent_chart == 'bar_chart_comp')):
       self.merge_spacefilling_bar_chart_comp(parent_node, self.root_node)
@@ -277,7 +277,7 @@ class VisualizationContainer:
   def merge_spacefilling_bar_chart_comp(self, bar_chart_node, spacefilling_node):
     self.valid_chart = 'bar_chart_comp'
     # building a more complicated bar chart comp
-    print("should be spacefilling barchart comp")
+    # print("should be spacefilling barchart comp")
     # The spacefilling areas need to get an offset so they appear in the barchart
     spacefilling_var = spacefilling_node.output_data
     bar_chart_var = bar_chart_node.output_data
@@ -346,8 +346,8 @@ class VisualizationContainer:
     # get the base parent chart preferences
     self.parse_node_preferences(parent_node)
     child_valid_chart = self.valid_chart
-    print("child_valid_chart is ", child_valid_chart)
-    print("parent_valid_chart is ", parent_valid_chart)
+    # print("child_valid_chart is ", child_valid_chart)
+    # print("parent_valid_chart is ", parent_valid_chart)
 
     # check condition 1
     if not parent_valid_chart:
