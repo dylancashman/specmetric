@@ -20,6 +20,12 @@ expressions:
     output_encoding_config:
       mark: square
       channels: vector-location
+  vector_abs:
+    input_data_type: vector
+    output_data_type: vector
+    output_encoding_config:
+      mark: line
+      channels: input_tied
   scalar_diff:
     input_data_type: scalar
     output_data_type: scalar

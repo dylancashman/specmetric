@@ -42,6 +42,8 @@ class AltairRenderer:
     self.resolved_specifications = resolved_specifications
     self.data_dict = data_dict
     self.input_vars = input_vars
+    # self.max_vector_axis = 400 # refactor
+    self.vector_scale = alt.Scale(domain=[0,500])
 
   def convert_to_charts(self):
     charts = []
@@ -171,7 +173,7 @@ class AltairRenderer:
         title = "Comparison of sum of {} and {}".format(vector_keys[0], vector_keys[1])
         tooltip_columns = sorted(list(set(total_bar_df.columns.values) & set(self.input_vars + ['id', 'part of'])))
         ratio_plot = alt.Chart(total_bar_df).mark_rect(opacity=0.2).encode(
-          x=alt.X('__x__', axis=alt.Axis(title=''), scale=alt.Scale(domain=[0,total_width])),
+          x=alt.X('__x__', axis=alt.Axis(title='', labels=False), scale=alt.Scale(domain=[0,total_width])),
           y=alt.Y('__y__', axis=alt.Axis(title='magnitude')),
           x2=alt.X2('__x2__'),
           y2=alt.Y2('__y2__'),
@@ -182,7 +184,6 @@ class AltairRenderer:
     elif (spec.valid_chart == 'spacefilling'):
 
       if (len(vector_data.keys()) > 0):
-        total_height = 400.0
         # then, draw any vector encodings
         sums = [np.sum(d) for (_,d) in vector_data.items()]
         max_total = max(sums)
@@ -259,12 +260,15 @@ class AltairRenderer:
             if (encodings['mark'] == 'point') and (encodings['preference'] == 'x'):
               scatter_data['x'] = self.data_dict[attr]
               dot_attrs.append(attr)
+              scatter_data['color'] = attr
             elif (encodings['mark'] == 'point') and (encodings['preference'] == 'y'):
               scatter_data['y'] = self.data_dict[attr]
               dot_attrs.append(attr)
+              scatter_data['color'] = attr
             elif (encodings['mark'] == 'line'):
               scatter_data['linediff'] = self.data_dict[attr]
               line_attrs.append(attr)
+              scatter_data['color'] = attr
             elif (encodings['mark'] == 'square'):
               scatter_data['squarediff'] = np.sqrt(self.data_dict[attr])
               square_attrs.append(attr)
@@ -279,64 +283,63 @@ class AltairRenderer:
         # Then, we build the charts
         # First, the dots
         title = "Comparison of {} and {}".format(dot_attrs[0], dot_attrs[1])
+        tooltip_columns = sorted(list(set(scatter_data.columns.values) & set(self.input_vars + ['id'])))
         dot_plot = alt.Chart(scatter_data).mark_point().encode(
-          x=alt.X('x', axis=alt.Axis(title=dot_attrs[0])),
-          y=alt.Y('y', axis=alt.Axis(title=dot_attrs[1]))
+          x=alt.X('x', axis=alt.Axis(title=dot_attrs[0]), scale=self.vector_scale),
+          y=alt.Y('y', axis=alt.Axis(title=dot_attrs[1]), scale=self.vector_scale),
+          color=alt.condition(crosslinker, alt.value('yellow'), alt.Color('color', scale=categorical_color_scale, legend=None)),
+          tooltip=tooltip_columns
         ).properties(width=total_width, height=total_height, title=title)
         charts.append(dot_plot)
         # realign the axes
         max_pixel = scatter_data[['x', 'y']].max().max() * 1.1
-        for chart in charts:
-          chart.encoding.x.scale = alt.Scale(domain=[0,max_pixel])
-          chart.encoding.y.scale = alt.Scale(domain=[0,max_pixel])
+        # self.vector_scale.domain = [0,max_pixel]
+        # for chart in charts:
+        #   chart.encoding.x.scale = alt.Scale(domain=[0,max_pixel])
+        #   chart.encoding.y.scale = alt.Scale(domain=[0,max_pixel])
 
 
-        # Then, lines if they exist
-        if 'linediff' in scatter_data.columns.values:
-          scatter_data['liney2'] = scatter_data['y'] + np.abs(scatter_data['linediff'])
-          title = "Magnitudes of {}".format(line_attrs[0])
-          line_plot = alt.Chart(scatter_data).mark_line().encode(
-            x=alt.X('x', axis=alt.Axis(title=dot_attrs[0])),
-            y=alt.Y('y', axis=alt.Axis(title=dot_attrs[1])),
-            x2=alt.X2('x'),
-            y2=alt.Y2('liney2') # The diff is always the second operand
-          ).properties(width=total_width, height=total_height, title=title)
-          charts.append(line_plot)
-          # realign the axes
-          max_pixel = scatter_data[['x', 'y', 'liney2']].max().max() * 1.1
-          for chart in charts:
-            chart.encoding.x.scale = alt.Scale(domain=[0,max_pixel])
-            chart.encoding.y.scale = alt.Scale(domain=[0,max_pixel])
-
-
+        # Then, squares if they exist, or lines if they exist and squares don't
         # Then, squares if they exist
         if 'squarediff' in scatter_data.columns.values:
           scatter_data['squarex2'] = scatter_data['x'] + scatter_data['squarediff']
           scatter_data['squarey2'] = scatter_data['y'] + scatter_data['squarediff']
           title = "Magnitudes of {}".format(square_attrs[0])
-          tooltip_columns = sorted(list(set(scatter_data.columns.values) & set(self.input_vars + ['id'])))
           square_plot = alt.Chart(scatter_data).mark_rect(opacity=0.2).encode(
-            x=alt.X('x', axis=alt.Axis(title=dot_attrs[0])),
-            y=alt.Y('y', axis=alt.Axis(title=dot_attrs[1])),
+            x=alt.X('x', axis=alt.Axis(title=dot_attrs[0]), scale=self.vector_scale),
+            y=alt.Y('y', axis=alt.Axis(title=dot_attrs[1]), scale=self.vector_scale),
             x2=alt.X2('squarex2'),
             y2=alt.Y2('squarey2'),
             color=alt.condition(crosslinker, alt.value('yellow'), alt.Color('color', scale=categorical_color_scale, legend=None)),
             tooltip=tooltip_columns
           ).properties(width=total_width, height=total_height, title=title).add_selection(crosslinker)
           charts.append(square_plot)
+          # realign the axes
+          max_pixel = scatter_data[['x', 'y', 'squarex2', 'squarey2']].max().max() * 1.1
+          # self.vector_scale.domain = [0,max_pixel]
+
+        elif 'linediff' in scatter_data.columns.values:
+          scatter_data['liney2'] = scatter_data['y'] + np.abs(scatter_data['linediff'])
+          title = "Magnitudes of {}".format(line_attrs[0])
+          line_plot = alt.Chart(scatter_data).mark_line().encode(
+            x=alt.X('x', axis=alt.Axis(title=dot_attrs[0]), scale=self.vector_scale),
+            y=alt.Y('y', axis=alt.Axis(title=dot_attrs[1]), scale=self.vector_scale),
+            x2=alt.X2('x'),
+            y2=alt.Y2('liney2') # The diff is always the second operand
+          ).properties(width=total_width, height=total_height, title=title)
+          charts.append(line_plot)
+          # realign the axes
+          max_pixel = scatter_data[['x', 'y', 'liney2']].max().max() * 1.1
+          # self.vector_scale.domain = [0,max_pixel]
+
 
           #@todo - I can define a scale every time we have an input tied.  And the in chart gets the scale of its output, out chart gets the color of its input
         #   color=alt.condition(crosslinker, alt.value('yellow'), alt.Color('color', scale=None)),
         #   tooltip=tooltip_columns
         # ).properties(width=total_width, height=total_height, title=title).add_selection(crosslinker)
 
-          # realign the axes
-          max_pixel = scatter_data[['x', 'y', 'squarex2', 'squarey2']].max().max() * 1.1
-          for chart in charts:
-            chart.encoding.x.scale = alt.Scale(domain=[0,max_pixel])
-            chart.encoding.y.scale = alt.Scale(domain=[0,max_pixel])
 
-      y_equals_x_data = pd.DataFrame(data={'x': [0, max_pixel], 'y': [0, max_pixel]})
+      y_equals_x_data = pd.DataFrame(data={'x': self.vector_scale.domain, 'y': self.vector_scale.domain})
       y_equals_x_chart = alt.Chart(y_equals_x_data).mark_line().encode(
         x=alt.X('x'),
         y=alt.Y('y')
