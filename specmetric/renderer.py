@@ -38,9 +38,10 @@ class AltairRenderer:
   Also tries to use unique IDs for post-hoc cross linking
   """
 
-  def __init__(self, resolved_specifications, data_dict):
+  def __init__(self, resolved_specifications, data_dict, input_vars=[]):
     self.resolved_specifications = resolved_specifications
     self.data_dict = data_dict
+    self.input_vars = input_vars
 
   def convert_to_charts(self):
     charts = []
@@ -71,18 +72,6 @@ class AltairRenderer:
         result_chart = curr
 
     return result_chart
-
-  # def resolve_colors(self, charts):
-  #   # go through charts backwards, the first time we find a color
-  #   # encoding for vectors, we apply that color encoding to each
-  #   # chart we find
-  #   color_encoding = None
-  #   for chart_group in reversed(charts):
-  #     for chart in chart_group:
-  #       if color_encoding and (type(color_encoding).__name__ is not "UndefinedType"): # brittle
-  #         chart.encoding.color = color_encoding
-  #       else: 
-  #         color_encoding = chart.encoding.color
 
   def build_chart(self, spec, categorical_color_scale, crosslinker):
     charts = []
@@ -172,13 +161,15 @@ class AltairRenderer:
           bar_data['color'] = colname
           bar_data['part of'] = scalar_keys[i]
           bar_data['id'] = squares.index.values
+          for input_var in self.input_vars:
+            bar_data[input_var] = self.data_dict[input_var]
 
           total_bar_data.append(bar_data)
 
         total_bar_df = pd.concat(total_bar_data)
 
         title = "Comparison of sum of {} and {}".format(vector_keys[0], vector_keys[1])
-        tooltip_columns= list(set(total_bar_df.columns.values) & set(['id', 'part']))
+        tooltip_columns = sorted(list(set(total_bar_df.columns.values) & set(self.input_vars + ['id', 'part of'])))
         ratio_plot = alt.Chart(total_bar_df).mark_rect(opacity=0.2).encode(
           x=alt.X('__x__', axis=alt.Axis(title=''), scale=alt.Scale(domain=[0,total_width])),
           y=alt.Y('__y__', axis=alt.Axis(title='magnitude')),
@@ -281,6 +272,9 @@ class AltairRenderer:
 
         if 'ids' in self.data_dict:
           scatter_data['id'] = self.data_dict['ids']
+        
+        for input_var in self.input_vars:
+          scatter_data[input_var] = self.data_dict[input_var]
 
         # Then, we build the charts
         # First, the dots
@@ -320,13 +314,14 @@ class AltairRenderer:
           scatter_data['squarex2'] = scatter_data['x'] + scatter_data['squarediff']
           scatter_data['squarey2'] = scatter_data['y'] + scatter_data['squarediff']
           title = "Magnitudes of {}".format(square_attrs[0])
+          tooltip_columns = sorted(list(set(scatter_data.columns.values) & set(self.input_vars + ['id'])))
           square_plot = alt.Chart(scatter_data).mark_rect(opacity=0.2).encode(
             x=alt.X('x', axis=alt.Axis(title=dot_attrs[0])),
             y=alt.Y('y', axis=alt.Axis(title=dot_attrs[1])),
             x2=alt.X2('squarex2'),
             y2=alt.Y2('squarey2'),
             color=alt.condition(crosslinker, alt.value('yellow'), alt.Color('color', scale=categorical_color_scale, legend=None)),
-            tooltip=['id']
+            tooltip=tooltip_columns
           ).properties(width=total_width, height=total_height, title=title).add_selection(crosslinker)
           charts.append(square_plot)
 
