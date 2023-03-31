@@ -189,7 +189,7 @@ class VisualizationContainer:
         # We can't build this chart for a non-encoded attribute
         # We reset everything
         print("input_data[0]", input_data[0], " is not in self.encodings", self.child_encodings)
-        self.valid_chart = None
+        # self.valid_chart = None
       else:
         print("mean encoding was found")
         input_data_encoding = self.child_encodings[input_data[0]]['mark']
@@ -200,6 +200,12 @@ class VisualizationContainer:
             'channels': 'vector-location'
           }
         )
+        for key, encoding in self.child_encodings.items():
+          if 'skip' in encoding: # this was the bar encoding of previous one
+            self.update_encoding(
+              key,
+              encoding
+            )
 
   # def validate_visualization(self):
   #   """
@@ -356,7 +362,7 @@ class VisualizationContainer:
     # get the base parent chart preferences
     self.parse_node_preferences(parent_node)
     child_valid_chart = self.valid_chart
-    # print("child_valid_chart is ", child_valid_chart)
+    # print("merging parent child_valid_chart is ", child_valid_chart)
     # print("parent_valid_chart is ", parent_valid_chart)
 
     # check condition 1

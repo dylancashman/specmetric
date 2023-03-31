@@ -84,6 +84,7 @@ class AltairRenderer:
     charts = []
     scalar_data = OrderedDict()
     vector_data = OrderedDict()
+    skipped_data = OrderedDict()
     total_height = 400.0
     total_width = 400.0
     title = ''
@@ -95,8 +96,14 @@ class AltairRenderer:
       if 'vector' in encodings['channels']:
         vector_data[attr] = self.data_dict[attr]
 
+      if 'skip' in encodings:
+        skipped_data[attr] = self.data_dict[attr]
+
     scalar_keys = list(scalar_data.keys())
     vector_keys = list(vector_data.keys())
+    skipped_keys = list(skipped_data.keys())
+
+    print("vector_keys is ", vector_keys, " and spec.valid_chart is ", spec.valid_chart)
 
     if (spec.valid_chart == 'bar_chart_diff') or (spec.valid_chart == 'bar_chart_comp'):
       # Then, need to calculate any additional attributes
@@ -189,11 +196,12 @@ class AltairRenderer:
         print("bar chart spacefilling plot is ", ratio_plot)
         charts.append(ratio_plot)
     elif (spec.valid_chart == 'mean_chart'):
-      if (len(vector_data.keys()) > 0):
+      print(" and in here, vector_keys is ", vector_keys)
+      if (len(vector_keys) > 0):
         # We have a mean visualization
         # We lay out the marks on an x axis in order of their value
         # and also draw the mean, annotated
-        for attr, data in vector_data.items():
+        for attr in vector_keys:
           values = self.data_dict[attr]
           ids = self.data_dict['ids']
           mean_value = np.mean(values)
@@ -202,6 +210,9 @@ class AltairRenderer:
           values_df = pd.DataFrame(data={'val': values, 'is_mean': False, 'is_median': False}, index=ids)
           for input_var in self.input_vars:
             values_df[input_var] = self.data_dict[input_var]
+
+          for skipped_var in skipped_keys:
+            values_df[skipped_var] = self.data_dict[skipped_var]
 
           # we add in the mean value with id -1
           # we add in the median value with id -2
@@ -262,7 +273,7 @@ class AltairRenderer:
 
 
           mark = spec.encodings[attr]['mark']
-          if mark == 'line':
+          if mark == 'line' and ('skip' not in spec.encodings[attr]):
             values_df['y'] = 0
             values_df['x2'] = values_df['x']
             values_df['y2'] = values_df['val']
@@ -273,10 +284,45 @@ class AltairRenderer:
               x2=alt.X2('x2'),
               y2=alt.Y2('y2'),
               tooltip=tooltip_columns,
-              color=alt.condition(crosslinker, alt.value('yellow'), alt.Color('color', scale=categorical_color_scale, legend=None)),
-            ).properties(width=total_width, height=total_height, title=title).add_selection(crosslinker)
+              # color=alt.condition(crosslinker, alt.value('yellow'), alt.Color('color', scale=categorical_color_scale, legend=None)),
+              color=alt.Color('color', scale=categorical_color_scale, legend=None),
+            ).properties(width=total_width, height=total_height, title=title
+            )
+            # ).add_selection(crosslinker)
             print("line line plot is ", line_plot)
             charts.append(line_plot)
+
+          if mark == 'bar-compare':
+            # We need to get the 'skip' attributes (bars) and place 
+            # them according to this attribute
+
+            # we draw small bars at each point
+            bar_width = 0.25
+            ratio_bar_dataframes = []
+            for i, bar_type in enumerate(skipped_keys):
+              ratio_bar_data = pd.DataFrame()
+              ratio_bar_data['x-ratio'] = values_df['x'] + (i*bar_width)
+              ratio_bar_data['y-ratio'] = 0
+              ratio_bar_data['x2-ratio'] = values_df['x'] + ((i+1)*bar_width)
+              ratio_bar_data['y2-ratio'] = values_df[bar_type]
+              ratio_bar_data['color-ratio'] = bar_type
+              ratio_bar_data['id'] = values_df['id']
+              ratio_bar_dataframes.append(ratio_bar_data)
+
+            ratio_bar_data = pd.concat(ratio_bar_dataframes)
+            bar_plot = alt.Chart(ratio_bar_data).mark_rect(opacity=0.4).encode(
+              x=alt.X('x-ratio', axis=alt.Axis(title='', labels=False)),
+              y=alt.Y('y-ratio', axis=alt.Axis(title="Ratio of {} to {}".format(skipped_keys[0], skipped_keys[1]), labels=False), scale=self.vector_scale),
+              x2=alt.X2('x2-ratio'),
+              y2=alt.Y2('y2-ratio'),
+              color=alt.Color('color-ratio', scale=categorical_color_scale, legend=None),
+              # color=alt.condition(crosslinker, alt.value('yellow'), alt.Color('color-ratio', scale=categorical_color_scale, legend=None)), 
+            # ).add_selection(crosslinker)
+            )
+            mean_x_location = values_df[values_df['is_mean']].iloc[0].x
+            median_x_location = values_df[values_df['is_median']].iloc[0].x
+
+            charts.append(bar_plot)
 
           if mark == 'square':
             # We do a little hack to keep the squares the right size, but on a single chart
@@ -306,7 +352,6 @@ class AltairRenderer:
             # mean_x_location = values_df.loc[mean_x_i].squarex
             # median_x_location = values_df.loc[median_x_i].squarex
 
-
           # whatever mark, we put dotted annotations of where the mean and median are
           mean_line_data = pd.DataFrame(data={
             'x': [mean_x_location - 0.1, mean_x_location - 0.1], 
@@ -330,8 +375,10 @@ class AltairRenderer:
           ).transform_filter(
             (datum.y > 0)
           )
-          charts.append(mean_line)
-          charts.append(mean_text)
+          print("len(vector_keys) is ", len(vector_keys), " attr is ", attr, " and spec.encodings[attr] is ", spec.encodings[attr])
+          if (len(vector_keys) == 1 or ('skip' not in spec.encodings[attr])): 
+            charts.append(mean_line)
+            charts.append(mean_text)
 
           median_line_data = pd.DataFrame(data={
             'x': [median_x_location + 0.1, median_x_location + 0.1], 
@@ -356,8 +403,9 @@ class AltairRenderer:
             (datum.y > 0)
           )
           # print("mean lines plot is ", mean_line)
-          charts.append(median_line)
-          charts.append(median_text)
+          if (len(vector_keys) == 1 or ('skip' not in spec.encodings[attr])):
+            charts.append(median_line)
+            charts.append(median_text)
 
           # Now, if there is a scalar key, it means that we have a sqrt
           if len(scalar_keys) > 0:
@@ -389,32 +437,6 @@ class AltairRenderer:
             )
             charts.append(mean_sqrt_line)
             charts.append(mean_sqrt_text)
-
-
-# if (encodings['mark'] == 'point') and (encodings['preference'] == 'x'):
-#               scatter_data['x'] = self.data_dict[attr]
-#               dot_attrs.append(attr)
-#               scatter_data['color'] = attr
-#             elif (encodings['mark'] == 'point') and (encodings['preference'] == 'y'):
-#               scatter_data['y'] = self.data_dict[attr]
-#               dot_attrs.append(attr)
-#               scatter_data['color'] = attr
-#             elif (encodings['mark'] == 'line'):
-#               scatter_data['linediff'] = self.data_dict[attr]
-#               line_attrs.append(attr)
-#               scatter_data['color'] = attr
-#             elif (encodings['mark'] == 'square'):
-#               scatter_data['squarediff'] = np.sqrt(self.data_dict[attr])
-#               square_attrs.append(attr)
-#               scatter_data['color'] = attr
-
-
-
-
-
-
-
-
 
     elif (spec.valid_chart == 'spacefilling'):
 
@@ -460,27 +482,6 @@ class AltairRenderer:
         charts.append(ratio_plot)
     elif spec.valid_chart == 'scatter_y_equals_x':
       # Then, need to calculate any additional attributes
-      if (len(scalar_data.keys()) > 0):
-        # chart_data = pd.DataFrame()
-        # # we put all scalar data into a single column
-        # chart_data['scalar_values'] = list(scalar_data.values())
-        # # and add a second column with the names of the scalars
-        # # so that they can be colored categorically
-        # chart_data['scalar_names'] = list(scalar_data.keys())
-
-        # # first, draw the scalar bars
-        # chart = alt.Chart(scalar_data).mark_bar()
-
-        # chart.encode(
-        #   x='scalar_names',
-        #   y='scalar_values'
-        # )
-        # charts.append(chart)
-        # not sure what we do with the scalar encodings.  But it happens here.
-        # Basically, we should have a tied input (for things like the y=x line or
-        # the y=ybar line)
-        pass
-
       if (len(vector_data.keys()) > 0):
         # These are the scatters
         vector_encodings = list(vector_data.keys())
@@ -490,6 +491,7 @@ class AltairRenderer:
         dot_attrs = []
         line_attrs = []
         square_attrs = []
+        bar_attrs = []
         for attr, encodings in spec.encodings.items():
           if attr in vector_encodings:
             # First, check for points
@@ -504,6 +506,8 @@ class AltairRenderer:
             elif (encodings['mark'] == 'line'):
               if 'skip' in encodings:
                 scatter_data['color'] = attr # we keep the color but
+                scatter_data[attr] = self.data_dict[attr]
+                bar_attrs.append(attr)
                 pass # we don't want to blow out other encodings
               else:
                 scatter_data['linediff'] = self.data_dict[attr]
@@ -516,6 +520,11 @@ class AltairRenderer:
                 scatter_data['squarediff'] = np.sqrt(self.data_dict[attr])
                 square_attrs.append(attr)
                 scatter_data['color'] = attr
+
+          if (encodings['mark'] == 'bar-compare'):
+            bar_attrs.append(attr)
+            scatter_data[attr] = self.data_dict[attr]
+            scatter_data['color-'+attr] = attr
 
         if 'ids' in self.data_dict:
           scatter_data['id'] = self.data_dict['ids']
@@ -530,7 +539,8 @@ class AltairRenderer:
         dot_plot = alt.Chart(scatter_data).mark_point().encode(
           x=alt.X('x', axis=alt.Axis(title=dot_attrs[0]), scale=self.vector_scale),
           y=alt.Y('y', axis=alt.Axis(title=dot_attrs[1]), scale=self.vector_scale),
-          color=alt.condition(crosslinker, alt.value('yellow'), alt.Color('color', scale=categorical_color_scale, legend=None)),
+          # color=alt.condition(crosslinker, alt.value('yellow'), alt.Color('color', scale=categorical_color_scale, legend=None)),
+          color=alt.Color('color', scale=categorical_color_scale, legend=None),
           tooltip=tooltip_columns
         ).properties(width=total_width, height=total_height, title=title)
         print("dot plot is ", dot_plot)
@@ -555,7 +565,8 @@ class AltairRenderer:
             x2=alt.X2('squarex2'),
             y2=alt.Y2('squarey2'),
             tooltip=tooltip_columns,
-            color=alt.condition(crosslinker, alt.value('yellow'), alt.Color('color', scale=categorical_color_scale, legend=None)),
+            # color=alt.condition(crosslinker, alt.value('yellow'), alt.Color('color', scale=categorical_color_scale, legend=None)),
+            color=alt.Color('color', scale=categorical_color_scale, legend=None),
           ).properties(width=total_width, height=total_height, title=title).add_selection(crosslinker)
           print("square plot is ", square_plot)
           charts.append(square_plot)
@@ -563,7 +574,8 @@ class AltairRenderer:
           max_pixel = scatter_data[['x', 'y', 'squarex2', 'squarey2']].max().max() * 1.1
           # self.vector_scale.domain = [0,max_pixel]
 
-        elif 'linediff' in scatter_data.columns.values:
+        elif ('linediff' in scatter_data.columns.values) and (len(bar_attrs) == 0):
+        # elif ('linediff' in scatter_data.columns.values):
           scatter_data['liney2'] = scatter_data['y'] + scatter_data['linediff']
           title = "Magnitudes of {}".format(line_attrs[0])
           line_plot = alt.Chart(scatter_data).mark_line().encode(
@@ -580,12 +592,33 @@ class AltairRenderer:
           max_pixel = scatter_data[['x', 'y', 'liney2']].max().max() * 1.1
           # self.vector_scale.domain = [0,max_pixel]
 
+        if len(bar_attrs) > 0:
+          print(" we are creating a bar plot.  I hope!")
+          # we draw small bars at each point
+          bar_width = 5
+          ratio_bar_dataframes = []
+          for i, bar_type in enumerate(bar_attrs):
+            ratio_bar_data = pd.DataFrame()
+            ratio_bar_data['x-ratio'] = scatter_data['x'] + (i*bar_width)
+            ratio_bar_data['y-ratio'] = scatter_data['y']
+            ratio_bar_data['x2-ratio'] = scatter_data['x'] + ((i+1)*bar_width)
+            ratio_bar_data['y2-ratio'] = scatter_data['y'] - scatter_data[bar_type]
+            ratio_bar_data['color-ratio'] = bar_type
+            ratio_bar_data['id'] = self.data_dict['ids']
+            ratio_bar_dataframes.append(ratio_bar_data)
 
-          #@todo - I can define a scale every time we have an input tied.  And the in chart gets the scale of its output, out chart gets the color of its input
-        #   color=alt.condition(crosslinker, alt.value('yellow'), alt.Color('color', scale=None)),
-        #   tooltip=tooltip_columns
-        # ).properties(width=total_width, height=total_height, title=title).add_selection(crosslinker)
-
+          ratio_bar_data = pd.concat(ratio_bar_dataframes)
+          bar_plot = alt.Chart(ratio_bar_data).mark_rect(opacity=0.4).encode(
+            x=alt.X('x-ratio', scale=self.vector_scale),
+            y=alt.Y('y-ratio', scale=self.vector_scale),
+            x2=alt.X2('x2-ratio'),
+            y2=alt.Y2('y2-ratio'),
+            color=alt.Color('color-ratio', scale=categorical_color_scale, legend=None),
+            # color=alt.condition(crosslinker, alt.value('yellow'), alt.Color('color-ratio', scale=categorical_color_scale, legend=None)), 
+          # ).add_selection(crosslinker)
+          )
+          print("appending bar_plot ", bar_plot)
+          charts.append(bar_plot)
 
       y_equals_x_data = pd.DataFrame(data={'x': self.vector_scale.domain, 'y': self.vector_scale.domain})
       y_equals_x_chart = alt.Chart(y_equals_x_data).mark_line().encode(

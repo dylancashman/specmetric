@@ -36,6 +36,12 @@ expressions:
       mark: line
       channels: vector-location
       skip: skip
+  vector_ratio:
+    input_data_type: vector
+    output_data_type: vector
+    output_encoding_config:
+      mark: bar-compare
+      channels: vector-location
   scalar_sqrt:
     input_data_type: scalar
     output_data_type: scalar

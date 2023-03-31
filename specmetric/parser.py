@@ -55,7 +55,7 @@ class ComputationTreeParser:
         # print("it was mergeable, parent_node is ", parent_node.name)
         child_container.merge_parent(parent_node)
         # The child container has invaded the parent container and taken over
-        # print("merging parent_node {} to child_container {}, and should be copying ")
+        # print("merging parent_node {} to child_container {}, and should be copying ".format(parent_node, child_container))
         for node in parent_container.computation_nodes:
           child_container.add_node(node)
 
@@ -65,6 +65,7 @@ class ComputationTreeParser:
         child_container.root_node = parent_container.root_node
 
         parent_container = child_container
+        # print("resulting container is chart", parent_container.valid_chart)
       else:
         # print("it was not mergeable")
         unmerged_child_containers.append(child_container)
