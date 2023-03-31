@@ -20,6 +20,15 @@ expressions:
     output_encoding_config:
       mark: square
       channels: vector-location
+  vector_sqrt:
+    input_data_type: vector
+    output_data_type: vector
+    input_encoding_config:
+      mark: square
+      channels: vector-location
+    output_encoding_config:
+      mark: line
+      channels: vector-location
   vector_abs:
     input_data_type: vector
     output_data_type: vector
@@ -27,6 +36,15 @@ expressions:
       mark: line
       channels: vector-location
       skip: skip
+  scalar_sqrt:
+    input_data_type: scalar
+    output_data_type: scalar
+    input_encoding_config:
+      mark: square
+      channels: scalar-location
+    output_encoding_config:
+      mark: line
+      channels: scalar-location
   scalar_diff:
     input_data_type: scalar
     output_data_type: scalar

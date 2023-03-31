@@ -310,9 +310,7 @@ class AltairRenderer:
           # whatever mark, we put dotted annotations of where the mean and median are
           mean_line_data = pd.DataFrame(data={
             'x': [mean_x_location - 0.1, mean_x_location - 0.1], 
-            'y': [0, total_height], 
-            'x2': [mean_x_location, mean_x_location],
-            'y2': [total_height, total_height],
+            'y': [0, total_height],
             'color': ['mean', 'mean']})
           mean_line = alt.Chart(mean_line_data).mark_line(strokeDash=[5,3], opacity=0.5, strokeWidth=2).encode(
             x=alt.X('x'),
@@ -337,9 +335,7 @@ class AltairRenderer:
 
           median_line_data = pd.DataFrame(data={
             'x': [median_x_location + 0.1, median_x_location + 0.1], 
-            'y': [0, total_height * 0.8], 
-            'x2': [median_x_location, median_x_location],
-            'y2': [total_height, total_height],
+            'y': [0, total_height * 0.8],
             'color': ['median', 'median']})
           median_line = alt.Chart(median_line_data).mark_line(strokeDash=[5,3], opacity=0.5, strokeWidth=2).encode(
             x=alt.X('x'),
@@ -362,6 +358,37 @@ class AltairRenderer:
           # print("mean lines plot is ", mean_line)
           charts.append(median_line)
           charts.append(median_text)
+
+          # Now, if there is a scalar key, it means that we have a sqrt
+          if len(scalar_keys) > 0:
+            print("doing a sqrt")
+            scalar_key = scalar_keys[0]
+            sqrt_val = np.sqrt(mean_value)
+            # we draw a line on the mean chart
+            mean_sqrt_data = pd.DataFrame(data={
+              'x': [mean_x_location - 0.1, mean_x_location - 0.1 + sqrt_val], 
+              'y': [sqrt_val, sqrt_val],
+              'color': ['sqrt', 'sqrt']})
+            mean_sqrt_line = alt.Chart(mean_sqrt_data).mark_line(opacity=1.0, strokeWidth=5).encode(
+              x=alt.X('x'),
+              y=alt.Y('y'),
+              color=alt.Color('color', scale=categorical_color_scale, legend=None)
+            )
+            mean_sqrt_text = alt.Chart(mean_sqrt_data).mark_text(
+              align='left',
+              baseline='middle',
+              fontSize=20,
+              dx=7
+            ).encode(
+              x=alt.X('x'),
+              y=alt.Y('y'),
+              color=alt.Color('color', scale=categorical_color_scale, legend=None),
+              text=alt.value(scalar_key + " = {0:.2f}".format(sqrt_val))
+            ).transform_filter(
+              (datum.x > mean_x_location)
+            )
+            charts.append(mean_sqrt_line)
+            charts.append(mean_sqrt_text)
 
 
 # if (encodings['mark'] == 'point') and (encodings['preference'] == 'x'):
