@@ -11,12 +11,13 @@ class VisualizationContainer:
   its corresponding computation nodes.
   """  
 
-  def __init__(self, root_node, compositions=_compositions, grammatical_expressions=_grammatical_expressions, lowest_depth=0):
+  def __init__(self, root_node, child_encodings={},compositions=_compositions, grammatical_expressions=_grammatical_expressions, lowest_depth=0):
     self.root_node = root_node
     self.computation_nodes = [root_node]
     self.lowest_depth = lowest_depth
     self.valid_chart = None
     self.encodings = {}
+    self.child_encodings = child_encodings
     self.compositions = compositions
     self.grammatical_expressions = grammatical_expressions
     self.parse_node_preferences(root_node, initial=True)
@@ -183,13 +184,22 @@ class VisualizationContainer:
           'channels': 'scalar-location'
         }
       )
-      # self.update_encoding(
-      #   output_data,
-      #   {
-      #     'mark': 'line',
-      #     'channels': ['x', 'y']
-      #   }
-      # )
+    elif chart_type == 'mean_chart':
+      if input_data[0] not in self.child_encodings:
+        # We can't build this chart for a non-encoded attribute
+        # We reset everything
+        print("input_data[0]", input_data[0], " is not in self.encodings", self.child_encodings)
+        self.valid_chart = None
+      else:
+        print("mean encoding was found")
+        input_data_encoding = self.child_encodings[input_data[0]]['mark']
+        self.update_encoding(
+          input_data[0],
+          {
+            'mark': input_data_encoding,
+            'channels': 'vector-location'
+          }
+        )
 
   # def validate_visualization(self):
   #   """
@@ -378,10 +388,10 @@ class VisualizationContainer:
     # is all marked to be encoded, i.e. it should be visualized
     # This is to catch when an unexpected/uncovered function is used, like
     # np.fill(), which we don't currently have a visual analog for.
-    
-    # input_data = parent_node.input_data
-    # print("input_data is ", input_data, " and input_data_var in self.encodings for input_data_var in input_data is ", [input_data_var in self.encodings for input_data_var in input_data])
-    # print("self.encodings is ", self.encodings)
-    # return all(input_data_var in self.encodings for input_data_var in input_data)
-    # this isn't working, just return true and deal with it downstream
-    return True
+    # Or if a chart only makes sense if you have a certain encoding for
+    # the input data
+    parent_preferences = self.get_function_preferences(parent_node.function_type)
+    if ('valid_visualization' in parent_preferences) and parent_preferences['valid_visualization'] == 'mean_chart':
+      return all([((d in self.encodings) and (m in ['line', 'square'] for m in self.encodings[d]['mark'])) for d in parent_node.input_data])
+    else:
+      return True

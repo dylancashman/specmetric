@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import altair as alt
+from altair import datum
 from specmetric.position_calculators.squarifier import squarify_within_bar
 from collections import OrderedDict
 
@@ -69,6 +70,7 @@ class AltairRenderer:
           curr = c
 
       if result_chart:
+        print("result_chart is ", result_chart, " and curr is ", curr)
         result_chart = result_chart | curr
       else:
         result_chart = curr
@@ -121,6 +123,7 @@ class AltairRenderer:
           x=alt.X('scalar_names', axis=alt.Axis(title='')),
           y=alt.Y('scalar_values', axis=alt.Axis(title='magnitude'))
         ).properties(width=total_width, height=total_height, title=title)
+        print("bar chart plot is ", chart)
         charts.append(chart)
 
       if (len(vector_data.keys()) > 0):
@@ -180,7 +183,184 @@ class AltairRenderer:
           color=alt.condition(crosslinker, alt.value('yellow'), alt.Color('color', scale=categorical_color_scale, legend=None)),
           tooltip=tooltip_columns
         ).properties(width=total_width, height=total_height, title=title).add_selection(crosslinker)
+        print("bar chart spacefilling plot is ", ratio_plot)
         charts.append(ratio_plot)
+    elif (spec.valid_chart == 'mean_chart'):
+      if (len(vector_data.keys()) > 0):
+        # We have a mean visualization
+        # We lay out the marks on an x axis in order of their value
+        # and also draw the mean, annotated
+        for attr, data in vector_data.items():
+          values = self.data_dict[attr]
+          ids = self.data_dict['ids']
+          mean_value = np.mean(values)
+          median_value = np.median(values)
+
+          values_df = pd.DataFrame(data={'val': values, 'is_mean': False, 'is_median': False}, index=ids)
+          for input_var in self.input_vars:
+            values_df[input_var] = self.data_dict[input_var]
+
+          # we add in the mean value with id -1
+          # we add in the median value with id -2
+          # values.append(mean_value)
+          # ids.append(-1)
+          # values = np.append(mean_value, values)
+          # ids = np.append(-1, ids)
+          mean_row = []
+          median_row = []
+          for col in values_df.columns.values:
+            if col == 'val':
+              mean_row.append(mean_value)
+              median_row.append(median_value)
+            elif col == 'is_mean':
+              mean_row.append(True)
+              median_row.append(False)
+            elif col == 'is_median':
+              mean_row.append(False)
+              median_row.append(True)
+            else:
+              mean_row.append(-1)
+              median_row.append(-2)
+
+          # added = pd.DataFrame([mean_row, median_row], columns=values_df.columns)
+          # values_df = values_df.append(added)
+          values_df.loc[len(values_df)] = mean_row
+          values_df.loc[len(values_df)] = median_row
+          # we add in the median value with id -2
+          # values.append(median_value)
+          # ids.append(-2)
+          # values = np.append(median_value, values)
+          # ids = np.append(-2, ids)
+
+          values_df = values_df.sort_values(by='val')
+          values_df['id'] = values_df.index.values
+          values_df = values_df.reset_index(drop=True)
+
+          # mean_df = pd.DataFrame(data={'val': values_series.values, 'id': values_series.index.values})
+          # print(values_df) 
+          values_df['x'] = values_df.index.values # should give 0-indexed counter
+          # values_df['is_mean'] = values_df['id'] == -1
+          # values_df['is_median'] = values_df['id'] == -2
+
+          tooltip_columns = sorted(list(set(values_df.columns.values) & set(self.input_vars + ['id'])))
+
+          mean_x_location = values_df[values_df['is_mean']].iloc[0].x
+          median_x_location = values_df[values_df['is_median']].iloc[0].x
+          values_df['color'] = attr
+
+          mark = spec.encodings[attr]['mark']
+          if mark == 'line':
+            values_df['y'] = 0
+            values_df['x2'] = values_df['x']
+            values_df['y2'] = values_df['val']
+            title = "Distributions of {}".format(attr)
+            line_plot = alt.Chart(values_df).mark_line().encode(
+              x=alt.X('x', axis=alt.Axis(title='', labels=False)),
+              y=alt.Y('y', scale=self.vector_scale, axis=alt.Axis(title=attr)),
+              x2=alt.X2('x2'),
+              y2=alt.Y2('y2'),
+              tooltip=tooltip_columns,
+              color=alt.condition(crosslinker, alt.value('yellow'), alt.Color('color', scale=categorical_color_scale, legend=None)),
+            ).properties(width=total_width, height=total_height, title=title).add_selection(crosslinker)
+            print("line line plot is ", line_plot)
+            charts.append(line_plot)
+
+          if mark == 'square':
+            values_df['y'] = 0
+            values_df['x2'] = values_df['x'] + np.sqrt(values_df['val'])
+            values_df['y2'] = np.sqrt(values_df['val'])
+            title = "Distributions of {}".format(attr)
+            line_plot = alt.Chart(values_df).mark_rect(opacity=0.2).encode(
+              x=alt.X('x', axis=alt.Axis(title='', labels=False)),
+              y=alt.Y('y', scale=self.vector_scale, axis=alt.Axis(title=attr)),
+              x2=alt.X2('x2'),
+              y2=alt.Y2('y2'),
+              tooltip=tooltip_columns,
+              # color=alt.condition(crosslinker, alt.value('yellow'), alt.Color('color', scale=categorical_color_scale, legend=None)),
+            ).properties(width=total_width, height=total_height, title=title).add_selection(crosslinker)
+            print("rect line plot is ", line_plot)
+            charts.append(line_plot)
+
+          # whatever mark, we put dotted annotations of where the mean and median are
+          mean_line_data = pd.DataFrame(data={
+            'x': [mean_x_location - 0.1, mean_x_location - 0.1], 
+            'y': [0, total_height], 
+            'x2': [mean_x_location, median_x_location],
+            'y2': [total_height, total_height]})
+          mean_line = alt.Chart(mean_line_data).mark_line(strokeDash=[5,3], opacity=0.5, strokeWidth=2).encode(
+            x=alt.X('x'),
+            y=alt.Y('y'),
+            color=alt.value('pink')
+          )
+          mean_text = alt.Chart(mean_line_data).mark_text(
+            align='left',
+            baseline='middle',
+            fontSize=20,
+            dx=7
+          ).encode(
+            x=alt.X('x'),
+            y=alt.Y('y'),
+            color=alt.value('pink'),
+            text=alt.value("mean = {0:.2f}".format(mean_value))
+          ).transform_filter(
+            (datum.y > 0)
+          )
+          charts.append(mean_line)
+          charts.append(mean_text)
+
+          median_line_data = pd.DataFrame(data={
+            'x': [median_x_location + 0.1, median_x_location + 0.1], 
+            'y': [0, total_height * 0.8], 
+            'x2': [median_x_location, median_x_location],
+            'y2': [total_height, total_height]})
+          median_line = alt.Chart(median_line_data).mark_line(strokeDash=[5,3], opacity=0.5, strokeWidth=2).encode(
+            x=alt.X('x'),
+            y=alt.Y('y'),
+            color=alt.value('purple')
+          )
+          median_text = alt.Chart(median_line_data).mark_text(
+            align='left',
+            baseline='middle',
+            fontSize=20,
+            dx=7
+          ).encode(
+            x=alt.X('x'),
+            y=alt.Y('y'),
+            color=alt.value('purple'),
+            text=alt.value("median = {0:.2f}".format(median_value))
+          ).transform_filter(
+            (datum.y > 0)
+          )
+          # print("mean lines plot is ", mean_line)
+          charts.append(median_line)
+          charts.append(median_text)
+
+
+# if (encodings['mark'] == 'point') and (encodings['preference'] == 'x'):
+#               scatter_data['x'] = self.data_dict[attr]
+#               dot_attrs.append(attr)
+#               scatter_data['color'] = attr
+#             elif (encodings['mark'] == 'point') and (encodings['preference'] == 'y'):
+#               scatter_data['y'] = self.data_dict[attr]
+#               dot_attrs.append(attr)
+#               scatter_data['color'] = attr
+#             elif (encodings['mark'] == 'line'):
+#               scatter_data['linediff'] = self.data_dict[attr]
+#               line_attrs.append(attr)
+#               scatter_data['color'] = attr
+#             elif (encodings['mark'] == 'square'):
+#               scatter_data['squarediff'] = np.sqrt(self.data_dict[attr])
+#               square_attrs.append(attr)
+#               scatter_data['color'] = attr
+
+
+
+
+
+
+
+
+
     elif (spec.valid_chart == 'spacefilling'):
 
       if (len(vector_data.keys()) > 0):
@@ -221,6 +401,7 @@ class AltairRenderer:
           y2=alt.Y2('__y2__'),
           color=alt.Color('color', scale=categorical_color_scale, legend=None)
         ).properties(width=total_width, height=total_height, title=title)
+        print("spacefilling plot is ", ratio_plot)
         charts.append(ratio_plot)
     elif spec.valid_chart == 'scatter_y_equals_x':
       # Then, need to calculate any additional attributes
@@ -266,13 +447,20 @@ class AltairRenderer:
               dot_attrs.append(attr)
               scatter_data['color'] = attr
             elif (encodings['mark'] == 'line'):
-              scatter_data['linediff'] = self.data_dict[attr]
-              line_attrs.append(attr)
-              scatter_data['color'] = attr
+              if 'skip' in encodings:
+                scatter_data['color'] = attr # we keep the color but
+                pass # we don't want to blow out other encodings
+              else:
+                scatter_data['linediff'] = self.data_dict[attr]
+                line_attrs.append(attr)
+                scatter_data['color'] = attr
             elif (encodings['mark'] == 'square'):
-              scatter_data['squarediff'] = np.sqrt(self.data_dict[attr])
-              square_attrs.append(attr)
-              scatter_data['color'] = attr
+              if 'skip' in encodings:
+                pass # we don't want to blow out other encodings
+              else:
+                scatter_data['squarediff'] = np.sqrt(self.data_dict[attr])
+                square_attrs.append(attr)
+                scatter_data['color'] = attr
 
         if 'ids' in self.data_dict:
           scatter_data['id'] = self.data_dict['ids']
@@ -290,6 +478,7 @@ class AltairRenderer:
           color=alt.condition(crosslinker, alt.value('yellow'), alt.Color('color', scale=categorical_color_scale, legend=None)),
           tooltip=tooltip_columns
         ).properties(width=total_width, height=total_height, title=title)
+        print("dot plot is ", dot_plot)
         charts.append(dot_plot)
         # realign the axes
         max_pixel = scatter_data[['x', 'y']].max().max() * 1.1
@@ -310,23 +499,27 @@ class AltairRenderer:
             y=alt.Y('y', axis=alt.Axis(title=dot_attrs[1]), scale=self.vector_scale),
             x2=alt.X2('squarex2'),
             y2=alt.Y2('squarey2'),
+            tooltip=tooltip_columns,
             color=alt.condition(crosslinker, alt.value('yellow'), alt.Color('color', scale=categorical_color_scale, legend=None)),
-            tooltip=tooltip_columns
           ).properties(width=total_width, height=total_height, title=title).add_selection(crosslinker)
+          print("square plot is ", square_plot)
           charts.append(square_plot)
           # realign the axes
           max_pixel = scatter_data[['x', 'y', 'squarex2', 'squarey2']].max().max() * 1.1
           # self.vector_scale.domain = [0,max_pixel]
 
         elif 'linediff' in scatter_data.columns.values:
-          scatter_data['liney2'] = scatter_data['y'] + np.abs(scatter_data['linediff'])
+          scatter_data['liney2'] = scatter_data['y'] + scatter_data['linediff']
           title = "Magnitudes of {}".format(line_attrs[0])
           line_plot = alt.Chart(scatter_data).mark_line().encode(
             x=alt.X('x', axis=alt.Axis(title=dot_attrs[0]), scale=self.vector_scale),
             y=alt.Y('y', axis=alt.Axis(title=dot_attrs[1]), scale=self.vector_scale),
             x2=alt.X2('x'),
-            y2=alt.Y2('liney2') # The diff is always the second operand
-          ).properties(width=total_width, height=total_height, title=title)
+            y2=alt.Y2('liney2'),
+            tooltip=tooltip_columns,
+            color=alt.condition(crosslinker, alt.value('yellow'), alt.Color('color', scale=categorical_color_scale, legend=None)), # The diff is always the second operand
+          ).properties(width=total_width, height=total_height, title=title).add_selection(crosslinker)
+          print("line plot is ", line_plot)
           charts.append(line_plot)
           # realign the axes
           max_pixel = scatter_data[['x', 'y', 'liney2']].max().max() * 1.1
@@ -344,6 +537,7 @@ class AltairRenderer:
         x=alt.X('x'),
         y=alt.Y('y')
       )
+      print("yequalsx plot is ", y_equals_x_chart)
       charts.append(y_equals_x_chart)
 
     # # put all the charts together, since they should share axes

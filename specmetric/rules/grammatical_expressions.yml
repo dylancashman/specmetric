@@ -25,7 +25,8 @@ expressions:
     output_data_type: vector
     output_encoding_config:
       mark: line
-      channels: input_tied
+      channels: vector-location
+      skip: skip
   scalar_diff:
     input_data_type: scalar
     output_data_type: scalar
@@ -43,9 +44,7 @@ expressions:
   mean:
     input_data_type: vector
     output_data_type: scalar
-    output_encoding_config:
-      mark: line
-      channels: input_tied
+    valid_visualization: mean_chart
   broadcast:
     input_data_type: scalar
     output_data_type: vector

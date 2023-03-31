@@ -36,10 +36,14 @@ class ComputationTreeParser:
     """
     # greedy search, swallow up list
     unmerged_child_containers = []
-    # print("in resolve_containers, len(visualization_container_list) is ", len(visualization_container_list))
-    # print("visualization_container_list is ", visualization_container_list)
-    # print("the parent_node is ", parent_node)
-    parent_container = VisualizationContainer(parent_node, compositions=compositions, grammatical_expressions=grammatical_expressions, lowest_depth=parent_depth)
+
+    # First, we need to get all children, and get their encodings
+    child_encodings = {}
+    for child_container in visualization_container_list:
+      child_encodings = child_encodings | child_container.encodings
+
+    parent_container = VisualizationContainer(parent_node, child_encodings=child_encodings, compositions=compositions, grammatical_expressions=grammatical_expressions, lowest_depth=parent_depth)
+
     while(len(visualization_container_list) > 0):
       child_container = visualization_container_list.pop()
       # print("here, child_container is ", child_container)
