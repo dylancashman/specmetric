@@ -34,6 +34,9 @@ class AltairRenderer:
     - spacefilling
       - chart with single bar
       - defines single primary attribute
+    - mean_chart
+      - Shows each value in order of size
+      - highlights mean and median
 
   Uses consistent scales across all visualizations, if possible
   Also tries to use unique IDs for post-hoc cross linking
@@ -244,9 +247,19 @@ class AltairRenderer:
 
           tooltip_columns = sorted(list(set(values_df.columns.values) & set(self.input_vars + ['id'])))
 
+          # mean_x_i = values_df[values_df['is_mean']].iloc[0].index
+          # median_x_i = values_df[values_df['is_median']].iloc[0].index
+          # mean_x_location = values_df.loc[mean_x_i].x
+          # median_x_location = values_df.loc[median_x_i].x
+          # values_df.iloc[mean_x_i, 'color'] = 'mean'
+          # values_df.iloc[median_x_i, 'color'] = 'median'
+          
           mean_x_location = values_df[values_df['is_mean']].iloc[0].x
-          median_x_location = values_df[values_df['is_median']].iloc[0].x
+          median_x_location = values_df[values_df['is_median']].iloc[0].x          
           values_df['color'] = attr
+          values_df['color'] = values_df.apply((lambda x: 'mean' if x.is_mean else x.color), axis=1)
+          values_df['color'] = values_df.apply((lambda x: 'median' if x.is_median else x.color), axis=1)
+
 
           mark = spec.encodings[attr]['mark']
           if mark == 'line':
@@ -266,31 +279,45 @@ class AltairRenderer:
             charts.append(line_plot)
 
           if mark == 'square':
+            # We do a little hack to keep the squares the right size, but on a single chart
+            values_df['sqrtval'] = np.sqrt(values_df['val'])
+            padding=3
+            values_df['squarex'] = 0
+            for i in range(1, len(values_df)):
+              values_df.loc[i, 'squarex'] = values_df.loc[i-1, 'squarex'] + values_df.loc[i-1, 'sqrtval'] + padding
+
             values_df['y'] = 0
-            values_df['x2'] = values_df['x'] + np.sqrt(values_df['val'])
+            values_df['x2'] = values_df['squarex'] + values_df['sqrtval']
             values_df['y2'] = np.sqrt(values_df['val'])
+
             title = "Distributions of {}".format(attr)
             line_plot = alt.Chart(values_df).mark_rect(opacity=0.2).encode(
-              x=alt.X('x', axis=alt.Axis(title='', labels=False)),
+              x=alt.X('squarex', scale=self.vector_scale, axis=alt.Axis(title='', labels=False)),
               y=alt.Y('y', scale=self.vector_scale, axis=alt.Axis(title=attr)),
               x2=alt.X2('x2'),
               y2=alt.Y2('y2'),
               tooltip=tooltip_columns,
-              # color=alt.condition(crosslinker, alt.value('yellow'), alt.Color('color', scale=categorical_color_scale, legend=None)),
-            ).properties(width=total_width, height=total_height, title=title).add_selection(crosslinker)
+              color=alt.condition(crosslinker, alt.value('yellow'), alt.Color('color', scale=categorical_color_scale, legend=None)),
+            ).properties(height=total_height, title=title).add_selection(crosslinker)
             print("rect line plot is ", line_plot)
             charts.append(line_plot)
+            mean_x_location = values_df[values_df['is_mean']].iloc[0].squarex
+            median_x_location = values_df[values_df['is_median']].iloc[0].squarex
+            # mean_x_location = values_df.loc[mean_x_i].squarex
+            # median_x_location = values_df.loc[median_x_i].squarex
+
 
           # whatever mark, we put dotted annotations of where the mean and median are
           mean_line_data = pd.DataFrame(data={
             'x': [mean_x_location - 0.1, mean_x_location - 0.1], 
             'y': [0, total_height], 
-            'x2': [mean_x_location, median_x_location],
-            'y2': [total_height, total_height]})
+            'x2': [mean_x_location, mean_x_location],
+            'y2': [total_height, total_height],
+            'color': ['mean', 'mean']})
           mean_line = alt.Chart(mean_line_data).mark_line(strokeDash=[5,3], opacity=0.5, strokeWidth=2).encode(
             x=alt.X('x'),
             y=alt.Y('y'),
-            color=alt.value('pink')
+            color=alt.Color('color', scale=categorical_color_scale, legend=None)
           )
           mean_text = alt.Chart(mean_line_data).mark_text(
             align='left',
@@ -300,7 +327,7 @@ class AltairRenderer:
           ).encode(
             x=alt.X('x'),
             y=alt.Y('y'),
-            color=alt.value('pink'),
+            color=alt.Color('color', scale=categorical_color_scale, legend=None),
             text=alt.value("mean = {0:.2f}".format(mean_value))
           ).transform_filter(
             (datum.y > 0)
@@ -312,11 +339,12 @@ class AltairRenderer:
             'x': [median_x_location + 0.1, median_x_location + 0.1], 
             'y': [0, total_height * 0.8], 
             'x2': [median_x_location, median_x_location],
-            'y2': [total_height, total_height]})
+            'y2': [total_height, total_height],
+            'color': ['median', 'median']})
           median_line = alt.Chart(median_line_data).mark_line(strokeDash=[5,3], opacity=0.5, strokeWidth=2).encode(
             x=alt.X('x'),
             y=alt.Y('y'),
-            color=alt.value('purple')
+            color=alt.Color('color', scale=categorical_color_scale, legend=None)
           )
           median_text = alt.Chart(median_line_data).mark_text(
             align='left',
@@ -326,7 +354,7 @@ class AltairRenderer:
           ).encode(
             x=alt.X('x'),
             y=alt.Y('y'),
-            color=alt.value('purple'),
+            color=alt.Color('color', scale=categorical_color_scale, legend=None),
             text=alt.value("median = {0:.2f}".format(median_value))
           ).transform_filter(
             (datum.y > 0)
