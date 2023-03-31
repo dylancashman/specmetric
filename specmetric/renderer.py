@@ -214,12 +214,6 @@ class AltairRenderer:
           for skipped_var in skipped_keys:
             values_df[skipped_var] = self.data_dict[skipped_var]
 
-          # we add in the mean value with id -1
-          # we add in the median value with id -2
-          # values.append(mean_value)
-          # ids.append(-1)
-          # values = np.append(mean_value, values)
-          # ids = np.append(-1, ids)
           mean_row = []
           median_row = []
           for col in values_df.columns.values:
@@ -249,31 +243,18 @@ class AltairRenderer:
           values_df = values_df.sort_values(by='val')
           values_df['id'] = values_df.index.values
           values_df = values_df.reset_index(drop=True)
-
-          # mean_df = pd.DataFrame(data={'val': values_series.values, 'id': values_series.index.values})
-          # print(values_df) 
           values_df['x'] = values_df.index.values # should give 0-indexed counter
-          # values_df['is_mean'] = values_df['id'] == -1
-          # values_df['is_median'] = values_df['id'] == -2
 
           tooltip_columns = sorted(list(set(values_df.columns.values) & set(self.input_vars + ['id'])))
 
-          # mean_x_i = values_df[values_df['is_mean']].iloc[0].index
-          # median_x_i = values_df[values_df['is_median']].iloc[0].index
-          # mean_x_location = values_df.loc[mean_x_i].x
-          # median_x_location = values_df.loc[median_x_i].x
-          # values_df.iloc[mean_x_i, 'color'] = 'mean'
-          # values_df.iloc[median_x_i, 'color'] = 'median'
-          
           mean_x_location = values_df[values_df['is_mean']].iloc[0].x
           median_x_location = values_df[values_df['is_median']].iloc[0].x          
           values_df['color'] = attr
           values_df['color'] = values_df.apply((lambda x: 'mean' if x.is_mean else x.color), axis=1)
           values_df['color'] = values_df.apply((lambda x: 'median' if x.is_median else x.color), axis=1)
 
-
           mark = spec.encodings[attr]['mark']
-          if mark == 'line' and ('skip' not in spec.encodings[attr]):
+          if mark == 'line' and ((len(vector_keys) < 2) or ('skip' not in spec.encodings[attr])):
             values_df['y'] = 0
             values_df['x2'] = values_df['x']
             values_df['y2'] = values_df['val']
@@ -284,11 +265,11 @@ class AltairRenderer:
               x2=alt.X2('x2'),
               y2=alt.Y2('y2'),
               tooltip=tooltip_columns,
-              # color=alt.condition(crosslinker, alt.value('yellow'), alt.Color('color', scale=categorical_color_scale, legend=None)),
-              color=alt.Color('color', scale=categorical_color_scale, legend=None),
+              color=alt.condition(crosslinker, alt.value('yellow'), alt.Color('color', scale=categorical_color_scale, legend=None)),
+              # color=alt.Color('color', scale=categorical_color_scale, legend=None),
             ).properties(width=total_width, height=total_height, title=title
-            )
-            # ).add_selection(crosslinker)
+            # )
+            ).add_selection(crosslinker)
             print("line line plot is ", line_plot)
             charts.append(line_plot)
 
@@ -315,10 +296,10 @@ class AltairRenderer:
               y=alt.Y('y-ratio', axis=alt.Axis(title="Ratio of {} to {}".format(skipped_keys[0], skipped_keys[1]), labels=False), scale=self.vector_scale),
               x2=alt.X2('x2-ratio'),
               y2=alt.Y2('y2-ratio'),
-              color=alt.Color('color-ratio', scale=categorical_color_scale, legend=None),
-              # color=alt.condition(crosslinker, alt.value('yellow'), alt.Color('color-ratio', scale=categorical_color_scale, legend=None)), 
-            # ).add_selection(crosslinker)
-            )
+              # color=alt.Color('color-ratio', scale=categorical_color_scale, legend=None),
+              color=alt.condition(crosslinker, alt.value('yellow'), alt.Color('color-ratio', scale=categorical_color_scale, legend=None)), 
+            ).add_selection(crosslinker)
+            # )
             mean_x_location = values_df[values_df['is_mean']].iloc[0].x
             median_x_location = values_df[values_df['is_median']].iloc[0].x
 
@@ -482,7 +463,7 @@ class AltairRenderer:
         charts.append(ratio_plot)
     elif spec.valid_chart == 'scatter_y_equals_x':
       # Then, need to calculate any additional attributes
-      if (len(vector_data.keys()) > 0):
+      if (len(vector_keys) > 0):
         # These are the scatters
         vector_encodings = list(vector_data.keys())
         num_encodings = len(vector_encodings)
@@ -504,7 +485,7 @@ class AltairRenderer:
               dot_attrs.append(attr)
               scatter_data['color'] = attr
             elif (encodings['mark'] == 'line'):
-              if 'skip' in encodings:
+              if len(vector_keys) > 1 and 'skip' in encodings:
                 scatter_data['color'] = attr # we keep the color but
                 scatter_data[attr] = self.data_dict[attr]
                 bar_attrs.append(attr)
@@ -539,18 +520,14 @@ class AltairRenderer:
         dot_plot = alt.Chart(scatter_data).mark_point().encode(
           x=alt.X('x', axis=alt.Axis(title=dot_attrs[0]), scale=self.vector_scale),
           y=alt.Y('y', axis=alt.Axis(title=dot_attrs[1]), scale=self.vector_scale),
-          # color=alt.condition(crosslinker, alt.value('yellow'), alt.Color('color', scale=categorical_color_scale, legend=None)),
-          color=alt.Color('color', scale=categorical_color_scale, legend=None),
+          color=alt.condition(crosslinker, alt.value('yellow'), alt.Color('color', scale=categorical_color_scale, legend=None)),
+          # color=alt.Color('color', scale=categorical_color_scale, legend=None),
           tooltip=tooltip_columns
         ).properties(width=total_width, height=total_height, title=title)
         print("dot plot is ", dot_plot)
         charts.append(dot_plot)
         # realign the axes
         max_pixel = scatter_data[['x', 'y']].max().max() * 1.1
-        # self.vector_scale.domain = [0,max_pixel]
-        # for chart in charts:
-        #   chart.encoding.x.scale = alt.Scale(domain=[0,max_pixel])
-        #   chart.encoding.y.scale = alt.Scale(domain=[0,max_pixel])
 
 
         # Then, squares if they exist, or lines if they exist and squares don't
@@ -565,8 +542,8 @@ class AltairRenderer:
             x2=alt.X2('squarex2'),
             y2=alt.Y2('squarey2'),
             tooltip=tooltip_columns,
-            # color=alt.condition(crosslinker, alt.value('yellow'), alt.Color('color', scale=categorical_color_scale, legend=None)),
-            color=alt.Color('color', scale=categorical_color_scale, legend=None),
+            color=alt.condition(crosslinker, alt.value('yellow'), alt.Color('color', scale=categorical_color_scale, legend=None)),
+            # color=alt.Color('color', scale=categorical_color_scale, legend=None),
           ).properties(width=total_width, height=total_height, title=title).add_selection(crosslinker)
           print("square plot is ", square_plot)
           charts.append(square_plot)
@@ -613,10 +590,10 @@ class AltairRenderer:
             y=alt.Y('y-ratio', scale=self.vector_scale),
             x2=alt.X2('x2-ratio'),
             y2=alt.Y2('y2-ratio'),
-            color=alt.Color('color-ratio', scale=categorical_color_scale, legend=None),
-            # color=alt.condition(crosslinker, alt.value('yellow'), alt.Color('color-ratio', scale=categorical_color_scale, legend=None)), 
-          # ).add_selection(crosslinker)
-          )
+            # color=alt.Color('color-ratio', scale=categorical_color_scale, legend=None),
+            color=alt.condition(crosslinker, alt.value('yellow'), alt.Color('color-ratio', scale=categorical_color_scale, legend=None)), 
+          ).add_selection(crosslinker)
+          # )
           print("appending bar_plot ", bar_plot)
           charts.append(bar_plot)
 
