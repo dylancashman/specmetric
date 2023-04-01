@@ -146,18 +146,7 @@ class ComputationTreeParser:
 
         # Then, we return the previous visualizations, and the visualization containers from
         # resolve_containers
-        # print("####### NEW DEPTH IS ", new_depth)
-        # print("####### and parent node is ", tree.name)
-        # print("resolved_child_tails is ", resolved_child_tails)
-        # print(" and child_container_heads is ", child_container_heads)
-        # print("child_container_heads is ", child_container_heads)
-        # print("resolved_child_tails is ", resolved_child_tails)
         resolved_child_tails = sorted(resolved_child_tails + ComputationTreeParser.resolve_containers(tree, child_container_heads, self.compositions, self.grammatical_expressions, parent_depth=new_depth), key=lambda x: (-1 * x.lowest_depth))
-        ## Somewhere in here is where we are supposed to propogate some encodings, since we have merged the two 
-        ## branches...
-        # print("resolved_child_tails is ", resolved_child_tails)
-        # print("pp resolved_child_tails is ", [x.pp() for x in resolved_child_tails])
-        # return sorted(resolved_child_tails, key=lambda x: x.lowest_depth)
         return resolved_child_tails
 
     self.visualization_containers = parse_node(self.computation_tree)

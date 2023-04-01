@@ -71,18 +71,6 @@ class VisualizationContainer:
           'channels': 'vector-location'
         }
       )
-      # Then, output data should be a scalar, encoded with an area
-      # self.update_encoding(
-      #   output_data,
-      #   {
-      #     'mark': 'area',
-      #     'channels': 'vector-location'
-      #   }
-      # )
-      # Actually, we don't explicitly encode the output in a spacefilling
-      # visualization - it is implicit.
-      # Although we might need to tell it about the value of the output...
-      # for scales.  Let's see.
 
       # The actual calculations of the values are calculated by the renderer
     elif chart_type == 'single_stacked_bar':
@@ -104,24 +92,10 @@ class VisualizationContainer:
         }
       )
 
-      # self.update_encoding(
-      #   output_data,
-      #   {
-      #     'mark': 'area',
-      #     'channels': ['x', 'y', 'x2', 'y2']
-      #   }
-      # )
+
     elif chart_type == 'scatter_y_equals_x':
       # Inputs are points on scatterplot
       # outputs are lines
-
-      # Need to check to see if the input data is already in the encoding
-      # and if it isn't, leave the encoding as blank
-      # so that a future merge can take over the encoding
-      # hmmmm.  Not sure where this takes place.  But we probably should
-      # only use one encoding for x and y for all merged charts.  Complicated.
-      # Or rather for all vector encodings.  But what is to say we use 
-      # that one over this one.
       self.update_encoding(
         input_data[0],
         {
@@ -162,13 +136,6 @@ class VisualizationContainer:
           'channels': 'scalar-location'
         }
       )
-      # self.update_encoding(
-      #   output_data,
-      #   {
-      #     'mark': 'line',
-      #     'channels': ['x', 'y']
-      #   }
-      # )
     elif chart_type == 'bar_chart_comp':
       self.update_encoding(
         input_data[0],
@@ -206,24 +173,6 @@ class VisualizationContainer:
               key,
               encoding
             )
-
-  # def validate_visualization(self):
-  #   """
-  #   Conducts some checks to make sure that a visualization doesn't need any 
-  #   additional encodings.  This can happen if a visualization has marks for a
-  #   vector, but doesn't yet have those attributes encoded (i.e. a scatter plot
-  #   but we only have 1 dimension defined)
-  #   """
-  #   if self.valid_chart == 'scatter_y_equals_x':
-  #     proposed_x_encoding = None
-  #     proposed_y_encoding = None
-  #     for (encoding, conf) in self.encodings.items():
-  #       if conf['preference'] == 'x':
-  #         proposed_x_encoding = encoding
-  #       elif conf['preference'] == 'y':
-  #         proposed_y_encoding = encoding
-
-  #     if 
 
 
   def update_encoding(self, attribute_name, encoding_config, overwrite=True):
@@ -281,8 +230,6 @@ class VisualizationContainer:
     child_encodings = self.encodings
     parent_chart = parent_preferences.get('valid_visualization')
     child_chart = self.valid_chart
-    # print("parent_node.name is ", parent_node.name, " parent_node is ", parent_node.function_type, ".  child root is ", self.root_node.name, " merging chart types ", parent_chart, " and ", child_chart)
-    # what is the resulting chart, and what encodings do we need
     if ((child_chart == 'spacefilling') and (parent_chart == 'bar_chart_comp')):
       self.merge_spacefilling_bar_chart_comp(parent_node, self.root_node)
     elif ((child_chart == 'spacefilling') and (parent_chart == 'single_stacked_bar')):

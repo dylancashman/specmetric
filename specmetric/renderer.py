@@ -73,7 +73,6 @@ class AltairRenderer:
           curr = c
 
       if result_chart:
-        print("result_chart is ", result_chart, " and curr is ", curr)
         result_chart = result_chart | curr
       else:
         result_chart = curr
@@ -133,7 +132,6 @@ class AltairRenderer:
           x=alt.X('scalar_names', axis=alt.Axis(title='')),
           y=alt.Y('scalar_values', axis=alt.Axis(title='magnitude'))
         ).properties(width=total_width, height=total_height, title=title)
-        print("bar chart plot is ", chart)
         charts.append(chart)
 
       if (len(vector_data.keys()) > 0):
@@ -193,10 +191,8 @@ class AltairRenderer:
           color=alt.condition(crosslinker, alt.value('yellow'), alt.Color('color', scale=categorical_color_scale, legend=None)),
           tooltip=tooltip_columns
         ).properties(width=total_width, height=total_height, title=title).add_selection(crosslinker)
-        print("bar chart spacefilling plot is ", ratio_plot)
         charts.append(ratio_plot)
     elif (spec.valid_chart == 'mean_chart'):
-      print(" and in here, vector_keys is ", vector_keys)
       if (len(vector_keys) > 0):
         # We have a mean visualization
         # We lay out the marks on an x axis in order of their value
@@ -230,15 +226,8 @@ class AltairRenderer:
               mean_row.append(-1)
               median_row.append(-2)
 
-          # added = pd.DataFrame([mean_row, median_row], columns=values_df.columns)
-          # values_df = values_df.append(added)
           values_df.loc[len(values_df)] = mean_row
           values_df.loc[len(values_df)] = median_row
-          # we add in the median value with id -2
-          # values.append(median_value)
-          # ids.append(-2)
-          # values = np.append(median_value, values)
-          # ids = np.append(-2, ids)
 
           values_df = values_df.sort_values(by='val')
           values_df['id'] = values_df.index.values
@@ -270,7 +259,6 @@ class AltairRenderer:
             ).properties(width=total_width, height=total_height, title=title
             # )
             ).add_selection(crosslinker)
-            print("line line plot is ", line_plot)
             charts.append(line_plot)
 
           if mark == 'bar-compare':
@@ -330,8 +318,6 @@ class AltairRenderer:
             charts.append(line_plot)
             mean_x_location = values_df[values_df['is_mean']].iloc[0].squarex
             median_x_location = values_df[values_df['is_median']].iloc[0].squarex
-            # mean_x_location = values_df.loc[mean_x_i].squarex
-            # median_x_location = values_df.loc[median_x_i].squarex
 
           # whatever mark, we put dotted annotations of where the mean and median are
           mean_line_data = pd.DataFrame(data={
@@ -356,7 +342,6 @@ class AltairRenderer:
           ).transform_filter(
             (datum.y > 0)
           )
-          print("len(vector_keys) is ", len(vector_keys), " attr is ", attr, " and spec.encodings[attr] is ", spec.encodings[attr])
           if (len(vector_keys) == 1 or ('skip' not in spec.encodings[attr])): 
             charts.append(mean_line)
             charts.append(mean_text)
@@ -390,7 +375,6 @@ class AltairRenderer:
 
           # Now, if there is a scalar key, it means that we have a sqrt
           if len(scalar_keys) > 0:
-            print("doing a sqrt")
             scalar_key = scalar_keys[0]
             sqrt_val = np.sqrt(mean_value)
             # we draw a line on the mean chart
@@ -459,7 +443,6 @@ class AltairRenderer:
           y2=alt.Y2('__y2__'),
           color=alt.Color('color', scale=categorical_color_scale, legend=None)
         ).properties(width=total_width, height=total_height, title=title)
-        print("spacefilling plot is ", ratio_plot)
         charts.append(ratio_plot)
     elif spec.valid_chart == 'scatter_y_equals_x':
       # Then, need to calculate any additional attributes
@@ -524,7 +507,6 @@ class AltairRenderer:
           # color=alt.Color('color', scale=categorical_color_scale, legend=None),
           tooltip=tooltip_columns
         ).properties(width=total_width, height=total_height, title=title)
-        print("dot plot is ", dot_plot)
         charts.append(dot_plot)
         # realign the axes
         max_pixel = scatter_data[['x', 'y']].max().max() * 1.1
@@ -545,7 +527,6 @@ class AltairRenderer:
             color=alt.condition(crosslinker, alt.value('yellow'), alt.Color('color', scale=categorical_color_scale, legend=None)),
             # color=alt.Color('color', scale=categorical_color_scale, legend=None),
           ).properties(width=total_width, height=total_height, title=title).add_selection(crosslinker)
-          print("square plot is ", square_plot)
           charts.append(square_plot)
           # realign the axes
           max_pixel = scatter_data[['x', 'y', 'squarex2', 'squarey2']].max().max() * 1.1
@@ -563,14 +544,12 @@ class AltairRenderer:
             tooltip=tooltip_columns,
             color=alt.condition(crosslinker, alt.value('yellow'), alt.Color('color', scale=categorical_color_scale, legend=None)), # The diff is always the second operand
           ).properties(width=total_width, height=total_height, title=title).add_selection(crosslinker)
-          print("line plot is ", line_plot)
           charts.append(line_plot)
           # realign the axes
           max_pixel = scatter_data[['x', 'y', 'liney2']].max().max() * 1.1
           # self.vector_scale.domain = [0,max_pixel]
 
         if len(bar_attrs) > 0:
-          print(" we are creating a bar plot.  I hope!")
           # we draw small bars at each point
           bar_width = 5
           ratio_bar_dataframes = []
@@ -594,7 +573,6 @@ class AltairRenderer:
             color=alt.condition(crosslinker, alt.value('yellow'), alt.Color('color-ratio', scale=categorical_color_scale, legend=None)), 
           ).add_selection(crosslinker)
           # )
-          print("appending bar_plot ", bar_plot)
           charts.append(bar_plot)
 
       y_equals_x_data = pd.DataFrame(data={'x': self.vector_scale.domain, 'y': self.vector_scale.domain})
@@ -602,19 +580,7 @@ class AltairRenderer:
         x=alt.X('x'),
         y=alt.Y('y')
       )
-      print("yequalsx plot is ", y_equals_x_chart)
       charts.append(y_equals_x_chart)
-
-    # # put all the charts together, since they should share axes
-    # resulting_chart = None
-    # for chart in charts:
-    #   if resulting_chart == None:
-    #     resulting_chart = chart
-    #   else:
-    #     resulting_chart = resulting_chart + chart
-
-    # charts = [resulting_chart]
-
 
     return charts
 
