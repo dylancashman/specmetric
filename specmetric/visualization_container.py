@@ -20,7 +20,7 @@ class VisualizationContainer:
     self.child_encodings = child_encodings
     self.compositions = compositions
     self.grammatical_expressions = grammatical_expressions
-    self.parse_node_preferences(root_node, initial=True)
+    self.parseDFTree_preferences(root_node, initial=True)
     self.parse_chart(self.valid_chart, self.root_node.input_data, self.root_node.output_data)
 
   # DEBUGGING PURPOSES
@@ -45,7 +45,7 @@ class VisualizationContainer:
   def get_node_preferences(self, node):
     return self.get_function_preferences(node.function_type)
 
-  def parse_node_preferences(self, node, initial=False):
+  def parseDFTree_preferences(self, node, initial=False):
     preferences = self.get_node_preferences(node)
 
     if initial and ('valid_visualization' in preferences):
@@ -307,7 +307,7 @@ class VisualizationContainer:
     # get self valid_chart
 
     # get the base parent chart preferences
-    self.parse_node_preferences(parent_node)
+    self.parseDFTree_preferences(parent_node)
     child_valid_chart = self.valid_chart
     # print("merging parent child_valid_chart is ", child_valid_chart)
     # print("parent_valid_chart is ", parent_valid_chart)

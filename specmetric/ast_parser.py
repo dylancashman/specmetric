@@ -352,7 +352,7 @@ class ComputationTreeParser:
   """
   # Class methods
 
-  def resolve_containers(parent_node, visualization_container_list):
+  def mergeFamily(parent_node, visualization_container_list):
     """
     Resolves 1 to n visualization containers (representing subgraphs)
     of computation graph into a list of m visualization containers.  Ideally
@@ -407,7 +407,7 @@ class ComputationTreeParser:
     self.node_dict = node_dict
     self.data_dict = data_dict
 
-  def parse_computation_tree(self):
+  def visualizeDFG(self):
     """
     Recursive parsing function.  
 
@@ -421,7 +421,7 @@ class ComputationTreeParser:
     Returns a list of visualization containers.
     """
 
-    def parse_node(tree):
+    def parseDFTree(tree):
       """
       pops the root node.  Determines if it can be added to the current 
       visualization container or if it needs to be the start of a new one.
@@ -441,7 +441,7 @@ class ComputationTreeParser:
         resolved_child_tails = []
         for child_node_id in tree.children:
           child_node = self.node_dict[child_node_id]
-          child_containers = parse_node(child_node)
+          child_containers = parseDFTree(child_node)
 
           # head gets judged against parent
           head_container = child_containers.pop()
@@ -457,10 +457,10 @@ class ComputationTreeParser:
         # child containers were not mergeable so they had to stay as separate visualizations
 
         # Then, we return the previous visualizations, and the visualization containers from
-        # resolve_containers
-        return resolved_child_tails + ComputationTreeParser.resolve_containers(tree, child_container_heads)
+        # mergeFamily
+        return resolved_child_tails + ComputationTreeParser.mergeFamily(tree, child_container_heads)
 
-    self.visualization_containers = [parse_node(self.computation_tree)]
+    self.visualization_containers = [parseDFTree(self.computation_tree)]
 
 
 

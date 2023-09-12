@@ -2,7 +2,7 @@
 
 Package to generate visualizations from computational data.
 
-Supplemental Material 2023 IEEE VIS Online Submission ID 1404
+Supplemental Material 2024 CHI Submission ID 6165
 
 Will be open sourced once this corresponding work is published.
 

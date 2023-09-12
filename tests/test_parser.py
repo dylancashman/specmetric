@@ -14,7 +14,7 @@ def test_parser_leaf():
         }
     }
     parser = ComputationTreeParser(leaf_node, grammatical_expressions=grammatical_expressions)
-    parser.parse_computation_tree()
+    parser.visualizeDFG()
     vis_containers = parser.visualization_containers
 
     assert len(vis_containers) == 1
@@ -28,7 +28,7 @@ def test_parser_scalar_sum():
     b_node = ComputationNode('literal_b', sum_node, 'scalar', output_data='b')
     parser = ComputationTreeParser(sum_node)
 
-    parser.parse_computation_tree()
+    parser.visualizeDFG()
     vis_containers = parser.visualization_containers
     print(vis_containers)
     # This should result in one visualization - a single stacked bar
@@ -48,7 +48,7 @@ def test_parser_scatter():
     b_node = ComputationNode('literal_b', diff_node, 'vector', output_data='b')
     parser = ComputationTreeParser(diff_node)
 
-    parser.parse_computation_tree()
+    parser.visualizeDFG()
     vis_containers = parser.visualization_containers
     print(vis_containers)
     # This should result in one visualization - a single scatter_y_equals_x
@@ -115,7 +115,7 @@ def test_parser_r2():
     y_hat_node = ComputationNode('literal_yhat', vector_difference_residuals, 'vector', output_data='y_hat_i')
 
     parser = ComputationTreeParser(minus_scalar)
-    parser.parse_computation_tree()
+    parser.visualizeDFG()
     vis_containers = parser.visualization_containers
 
     # This should result in 4 visualizations, but 3 sequences.
