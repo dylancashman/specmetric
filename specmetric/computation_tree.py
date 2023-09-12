@@ -28,6 +28,9 @@ class ComputationNode:
     self.output_data = output_data
     self.children = []
 
+  def __str__(self):
+    return "ComputationNode(name: " + self.name + ", function_type: " + self.function_type + ")"
+
   def set_parent(self, node_id):
     self.parent_node = node_id
 

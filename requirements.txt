@@ -6,3 +6,5 @@ scikit-learn
 numpy
 squarify
 jupyter
+flask
+altair_saver

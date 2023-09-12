@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    .error {
+        color: red;
+    }
+  </style>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm//vega@5"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm//vega-lite@4.17.0"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm//vega-embed@6"></script>
+</head>
+<body>
+  <div id="vis"></div>
+  <script>
+    (function(vegaEmbed) {
+      var spec = {"config": {"view": {"continuousWidth": 400, "continuousHeight": 300}}, "layer": [{"data": {"name": "data-2cb32359ef6e02685dbdfe52d4b36146"}, "mark": "line", "encoding": {"color": {"condition": {"value": "yellow", "selection": "selector001"}, "field": "color", "legend": null, "scale": {"scheme": "category10"}, "type": "nominal"}, "tooltip": [{"field": "id", "type": "quantitative"}], "x": {"axis": {"labels": false, "title": ""}, "field": "x", "type": "quantitative"}, "x2": {"field": "x2"}, "y": {"axis": {"title": "(B2:B10)"}, "field": "y", "scale": {"domain": [0, 500]}, "type": "quantitative"}, "y2": {"field": "y2"}}, "height": 400.0, "selection": {"selector001": {"type": "single", "fields": ["id"], "on": "mouseover", "empty": "none"}}, "title": "Distributions of (B2:B10)", "width": 400.0}, {"data": {"name": "data-2f47466f95a67ca1299208db543dd6c6"}, "mark": {"type": "line", "opacity": 0.5, "strokeDash": [5, 3], "strokeWidth": 2}, "encoding": {"color": {"field": "color", "legend": null, "scale": {"scheme": "category10"}, "type": "nominal"}, "x": {"field": "x", "type": "quantitative"}, "y": {"field": "y", "type": "quantitative"}}}, {"data": {"name": "data-2f47466f95a67ca1299208db543dd6c6"}, "mark": {"type": "text", "align": "left", "baseline": "middle", "dx": 7, "fontSize": 20}, "encoding": {"color": {"field": "color", "legend": null, "scale": {"scheme": "category10"}, "type": "nominal"}, "text": {"value": "mean = 337.78"}, "x": {"field": "x", "type": "quantitative"}, "y": {"field": "y", "type": "quantitative"}}, "transform": [{"filter": "(datum.y > 0)"}]}, {"data": {"name": "data-f6af098ff072b26b36c860ae33c6d327"}, "mark": {"type": "line", "opacity": 0.5, "strokeDash": [5, 3], "strokeWidth": 2}, "encoding": {"color": {"field": "color", "legend": null, "scale": {"scheme": "category10"}, "type": "nominal"}, "x": {"field": "x", "type": "quantitative"}, "y": {"field": "y", "type": "quantitative"}}}, {"data": {"name": "data-f6af098ff072b26b36c860ae33c6d327"}, "mark": {"type": "text", "align": "left", "baseline": "middle", "dx": 7, "fontSize": 20}, "encoding": {"color": {"field": "color", "legend": null, "scale": {"scheme": "category10"}, "type": "nominal"}, "text": {"value": "median = 350.00"}, "x": {"field": "x", "type": "quantitative"}, "y": {"field": "y", "type": "quantitative"}}, "transform": [{"filter": "(datum.y > 0)"}]}], "$schema": "https://vega.github.io/schema/vega-lite/v4.17.0.json", "datasets": {"data-2cb32359ef6e02685dbdfe52d4b36146": [{"val": 140.0, "is_mean": false, "is_median": false, "id": 5, "x": 0, "color": "(B2:B10)", "y": 0, "x2": 0, "y2": 140.0}, {"val": 240.0, "is_mean": false, "is_median": false, "id": 2, "x": 1, "color": "(B2:B10)", "y": 0, "x2": 1, "y2": 240.0}, {"val": 300.0, "is_mean": false, "is_median": false, "id": 1, "x": 2, "color": "(B2:B10)", "y": 0, "x2": 2, "y2": 300.0}, {"val": 300.0, "is_mean": false, "is_median": false, "id": 4, "x": 3, "color": "(B2:B10)", "y": 0, "x2": 3, "y2": 300.0}, {"val": 337.77777777777777, "is_mean": true, "is_median": false, "id": 9, "x": 4, "color": "mean", "y": 0, "x2": 4, "y2": 337.77777777777777}, {"val": 350.0, "is_mean": false, "is_median": false, "id": 3, "x": 5, "color": "(B2:B10)", "y": 0, "x2": 5, "y2": 350.0}, {"val": 350.0, "is_mean": false, "is_median": true, "id": 10, "x": 6, "color": "median", "y": 0, "x2": 6, "y2": 350.0}, {"val": 400.0, "is_mean": false, "is_median": false, "id": 7, "x": 7, "color": "(B2:B10)", "y": 0, "x2": 7, "y2": 400.0}, {"val": 420.0, "is_mean": false, "is_median": false, "id": 6, "x": 8, "color": "(B2:B10)", "y": 0, "x2": 8, "y2": 420.0}, {"val": 440.0, "is_mean": false, "is_median": false, "id": 8, "x": 9, "color": "(B2:B10)", "y": 0, "x2": 9, "y2": 440.0}, {"val": 450.0, "is_mean": false, "is_median": false, "id": 0, "x": 10, "color": "(B2:B10)", "y": 0, "x2": 10, "y2": 450.0}], "data-2f47466f95a67ca1299208db543dd6c6": [{"x": 3.9, "y": 0.0, "color": "mean"}, {"x": 3.9, "y": 400.0, "color": "mean"}], "data-f6af098ff072b26b36c860ae33c6d327": [{"x": 6.1, "y": 0.0, "color": "median"}, {"x": 6.1, "y": 320.0, "color": "median"}]}};
+      var embedOpt = {"renderer": "svg", "mode": "vega-lite"};
+
+      function showError(el, error){
+          el.innerHTML = ('<div class="error" style="color:red;">'
+                          + '<p>JavaScript Error: ' + error.message + '</p>'
+                          + "<p>This usually means there's a typo in your chart specification. "
+                          + "See the javascript console for the full traceback.</p>"
+                          + '</div>');
+          throw error;
+      }
+      const el = document.getElementById('vis');
+      vegaEmbed("#vis", spec, embedOpt)
+        .catch(error => showError(el, error));
+    })(vegaEmbed);
+
+  </script>
+</body>
+</html>

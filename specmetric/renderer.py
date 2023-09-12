@@ -197,7 +197,11 @@ class AltairRenderer:
         # and also draw the mean, annotated
         for attr in vector_keys:
           values = self.data_dict[attr]
-          ids = self.data_dict['ids']
+          if 'ids' in self.data_dict:
+            ids = self.data_dict['ids']
+          else:
+            ids = range(0,len(values))
+
           mean_value = np.mean(values)
           median_value = np.median(values)
 
@@ -240,7 +244,7 @@ class AltairRenderer:
           values_df['color'] = values_df.apply((lambda x: 'mean' if x.is_mean else x.color), axis=1)
           values_df['color'] = values_df.apply((lambda x: 'median' if x.is_median else x.color), axis=1)
 
-          mark = spec.encodings[attr]['mark']
+          mark = spec.encodings[attr]['mark'] or 'square'
           if mark == 'line' and ((len(vector_keys) < 2) or ('skip' not in spec.encodings[attr])):
             values_df['y'] = 0
             values_df['x2'] = values_df['x']
@@ -365,7 +369,6 @@ class AltairRenderer:
           ).transform_filter(
             (datum.y > 0)
           )
-          # print("mean lines plot is ", mean_line)
           if (len(vector_keys) == 1 or ('skip' not in spec.encodings[attr])):
             charts.append(median_line)
             charts.append(median_text)
@@ -422,8 +425,12 @@ class AltairRenderer:
           values = vector_data[colname]
           total = np.sum(values)
           bar_height = (total / max_total) * total_height
-          squares = squarify_within_bar(values, bar_width, bar_height, pad=True)
-          
+          if 'ids' in self.data_dict:
+            ids = self.data_dict['ids']
+          else:
+            ids = range(0,len(values))
+          squares = squarify_within_bar(ids, values, bar_width, bar_height, pad=True)
+
           bar_data = pd.DataFrame()
           bar_data['__x__'] = squares['x'] + offset
           bar_data['__x2__'] = squares['x'] + offset + squares['dx']

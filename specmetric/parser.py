@@ -46,16 +46,12 @@ class ComputationTreeParser:
 
     while(len(visualization_container_list) > 0):
       child_container = visualization_container_list.pop()
-      # print("here, child_container is ", child_container)
-      # print("and its valid_chart is ", child_container.valid_chart)
       if child_container.lowest_depth < parent_container.lowest_depth:
         child_container.lowest_depth = parent_container.lowest_depth
 
       if child_container.parent_mergeable(parent_node):
-        # print("it was mergeable, parent_node is ", parent_node.name)
         child_container.merge_parent(parent_node)
         # The child container has invaded the parent container and taken over
-        # print("merging parent_node {} to child_container {}, and should be copying ".format(parent_node, child_container))
         for node in parent_container.computation_nodes:
           child_container.add_node(node)
 
@@ -65,23 +61,10 @@ class ComputationTreeParser:
         child_container.root_node = parent_container.root_node
 
         parent_container = child_container
-        # print("resulting container is chart", parent_container.valid_chart)
       else:
-        # print("it was not mergeable")
         unmerged_child_containers.append(child_container)
 
-    # print("at the end, the parent_container has chart", parent_container.valid_chart)
-    # Need something that fixes encodings, i.e. scales, colors
-    # Similarly cross-linking
-    # Let's say that's the responsibility of the renderer.
-    # But we do need one more pass to figure out if anything is missing
-    # once we've merged in all the children.
-    # parent_container.validate_visualization()
-    # Let's see though, maybe we don't need it.
-
-
     unmerged_child_containers.append(parent_container)
-    # print("len(unmerged_child_containers) is ", len(unmerged_child_containers))
     return unmerged_child_containers
 
 

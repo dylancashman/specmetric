@@ -20,12 +20,13 @@ class VisualizationContainer:
     self.child_encodings = child_encodings
     self.compositions = compositions
     self.grammatical_expressions = grammatical_expressions
+    self.matchedRule = False
     self.parseDFTree_preferences(root_node, initial=True)
     self.parse_chart(self.valid_chart, self.root_node.input_data, self.root_node.output_data)
 
   # DEBUGGING PURPOSES
   def __repr__(self):
-    return "(VisualizationContainer - valid_chart: {}, root_node: {}, lowest_depth: {})".format(self.valid_chart, self.root_node.name, self.lowest_depth)
+    return "(VisualizationContainer - valid_chart: {}, root_node: {}, lowest_depth: {}, encodings: {})".format(self.valid_chart, self.root_node.name, self.lowest_depth, self.encodings)
 
   def pp(self):
     print("""
@@ -48,6 +49,9 @@ class VisualizationContainer:
   def parseDFTree_preferences(self, node, initial=False):
     preferences = self.get_node_preferences(node)
 
+    if preferences:
+      self.matchedRule=True
+
     if initial and ('valid_visualization' in preferences):
       self.valid_chart = preferences['valid_visualization']
 
@@ -59,7 +63,6 @@ class VisualizationContainer:
     """
     Adds the encodings for the selected chart type.  
     """
-    # print("parsing chart with chart_type", chart_type)
     if chart_type == 'spacefilling':
       # input_data should be a vector name
       # We should take input data's encoding.  We won't have that just yet.
@@ -153,11 +156,15 @@ class VisualizationContainer:
       )
     elif chart_type == 'mean_chart':
       if input_data[0] not in self.child_encodings:
-        # We can't build this chart for a non-encoded attribute
-        # We reset everything
-        # print("input_data[0]", input_data[0], " is not in self.encodings", self.child_encodings)
-        # self.valid_chart = None
-        pass
+        # Here, we arbitrarily choose lines if no encoding is specified
+        # Think of this as a greedy visualization presenter
+        self.update_encoding(
+          input_data[0],
+          {
+            'mark': 'line',
+            'channels': 'vector-location'
+          }
+          )
       else:
         input_data_encoding = self.child_encodings[input_data[0]]['mark']
         self.update_encoding(
@@ -176,7 +183,6 @@ class VisualizationContainer:
 
 
   def update_encoding(self, attribute_name, encoding_config, overwrite=True):
-    # print("here, self.encodings is ", self.encodings, " and attribute_name is ", attribute_name)
     if attribute_name not in self.encodings:
       self.encodings[attribute_name] = {}
     self.encodings[attribute_name] = self.encodings[attribute_name] | encoding_config
@@ -240,7 +246,6 @@ class VisualizationContainer:
   def merge_spacefilling_bar_chart_comp(self, bar_chart_node, spacefilling_node):
     self.valid_chart = 'bar_chart_comp'
     # building a more complicated bar chart comp
-    # print("should be spacefilling barchart comp")
     # The spacefilling areas need to get an offset so they appear in the barchart
     spacefilling_var = spacefilling_node.output_data
     bar_chart_var = bar_chart_node.output_data
@@ -309,8 +314,6 @@ class VisualizationContainer:
     # get the base parent chart preferences
     self.parseDFTree_preferences(parent_node)
     child_valid_chart = self.valid_chart
-    # print("merging parent child_valid_chart is ", child_valid_chart)
-    # print("parent_valid_chart is ", parent_valid_chart)
 
     # check condition 1
     if not parent_valid_chart:
@@ -322,12 +325,8 @@ class VisualizationContainer:
       # we only take the parent chart if it has valid data
       # # When inheriting valid chart from parent node, need to check that it is actually
       # # valid, i.e. the children have been picked for encoding
-      # print("checking if reqs met")
-      if self.chart_reqs_met(parent_node):
+      if self.matchedRule or self.chart_reqs_met(parent_node):
         self.valid_chart = parent_valid_chart
-        # print("reqs were met")
-        # self.parse_chart(parent_valid_chart, parent_node.input_data, parent_node.output_data)
-        # print(" OK, and now what is my valid chart?  ", self.valid_chart)
     # then condition 3
     else:
       #  get resulting chart, set valid chart, update preferences, etc.
