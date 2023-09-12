@@ -155,10 +155,10 @@ class VisualizationContainer:
       if input_data[0] not in self.child_encodings:
         # We can't build this chart for a non-encoded attribute
         # We reset everything
-        print("input_data[0]", input_data[0], " is not in self.encodings", self.child_encodings)
+        # print("input_data[0]", input_data[0], " is not in self.encodings", self.child_encodings)
         # self.valid_chart = None
+        pass
       else:
-        print("mean encoding was found")
         input_data_encoding = self.child_encodings[input_data[0]]['mark']
         self.update_encoding(
           input_data[0],

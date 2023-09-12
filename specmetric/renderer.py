@@ -102,8 +102,6 @@ class AltairRenderer:
     vector_keys = list(vector_data.keys())
     skipped_keys = list(skipped_data.keys())
 
-    print("vector_keys is ", vector_keys, " and spec.valid_chart is ", spec.valid_chart)
-
     if (spec.valid_chart == 'bar_chart_diff') or (spec.valid_chart == 'bar_chart_comp'):
       # Then, need to calculate any additional attributes
       bar_width = 150
@@ -314,7 +312,6 @@ class AltairRenderer:
               tooltip=tooltip_columns,
               color=alt.condition(crosslinker, alt.value('yellow'), alt.Color('color', scale=categorical_color_scale, legend=None)),
             ).properties(height=total_height, title=title).add_selection(crosslinker)
-            print("rect line plot is ", line_plot)
             charts.append(line_plot)
             mean_x_location = values_df[values_df['is_mean']].iloc[0].squarex
             median_x_location = values_df[values_df['is_median']].iloc[0].squarex
