@@ -8,6 +8,8 @@ Will be open sourced once this corresponding work is published.
 
 ## Installation
 
+Requires python 3.10
+
 	pip install -r requirements.txt
 
 ## Running
