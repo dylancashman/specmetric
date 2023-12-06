@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "specmetric"
 version = "0.0.1"
 authors = [
-  { name="Dylan Cashman", email="depcashman@gmail.com" },
+  { name="Anonymous", email="anonymous" },
 ]
 description = "Visualization tool for metric computations"
 readme = "README.md"
@@ -18,5 +18,5 @@ classifiers = [
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/dylancashman/specmetric"
-"Bug Tracker" = "https://github.com/dylancashman/specmetric/issues"
+"Homepage" = ""
+"Bug Tracker" = ""

@@ -4,6 +4,6 @@ from setuptools import setup, find_packages
         version='0.1.0',
         description='TBD',
         long_description='TBD',
-        author='Dylan Cashman',
-        author_email='depcashman@gmail.com'
+        author='ANONYMOUS',
+        author_email='ANONYMOUS'
     )
