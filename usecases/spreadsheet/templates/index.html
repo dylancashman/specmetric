@@ -1,186 +1,212 @@
 <html>
   <head>
-
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.js"></script>
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.js"
+    ></script>
     <script src="https://cdn.jsdelivr.net/npm/hyperformula/dist/hyperformula.full.min.js"></script>
     <script
-        src="https://code.jquery.com/jquery-3.7.1.js"
-        integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4="
-        crossorigin="anonymous"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.css" />
-
+      src="https://code.jquery.com/jquery-3.7.1.js"
+      integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4="
+      crossorigin="anonymous"
+    ></script>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.css"
+    />
   </head>
 
   <body>
     <div id="example"></div>
-    <iframe id="iFrameID" style="width: 700px; height: 700px" src="javascript:void(0);"></iframe>
+    <iframe
+      id="iFrameID"
+      style="width: 700px; height: 700px"
+      src="javascript:void(0);"
+    ></iframe>
     <script>
+      const hf = HyperFormula.buildEmpty({
+        licenseKey: "internal-use-in-handsontable",
+      });
 
-const hf = HyperFormula.buildEmpty({
-  licenseKey: 'internal-use-in-handsontable',
-});
+      const container = document.querySelector("#example");
 
-const container = document.querySelector('#example');
+      const columns = ["A", "B", "C", "D"];
 
-const columns=['A','B','C','D']
+      const logDFG = (address) => {
+        const datadict = {};
+        const nodes = [];
+        const toVisit = [{ addr: address, parent: null }];
+        let debugTimer = 0;
+        let rootName = "";
+        while (toVisit.length > 0 && debugTimer < 10) {
+          // Load the node to send to the server
+          debugTimer = debugTimer + 1;
+          const visited = toVisit.shift();
+          const visitVal = hf.getCellValue(visited.addr);
+          // const addrKey = "row" + visited.addr.row + "col" + visited.addr.col;
 
-const logDFG = (address) => {
-  const datadict = {};
-  const nodes = [];
-  const toVisit = [{addr: address, parent: null}];
-  let debugTimer = 0;
-  let rootName = ''
-  while ((toVisit.length > 0) && debugTimer < 10) {
-    // Load the node to send to the server
-    debugTimer = debugTimer + 1;
-    const visited = toVisit.shift();
-    const visitVal = hf.getCellValue(visited.addr);
-    // const addrKey = "row" + visited.addr.row + "col" + visited.addr.col;
+          const addrKey = columns[visited.addr.col] + (visited.addr.row + 1);
+          datadict[String(addrKey)] = visitVal;
+          const curr = {
+            name: addrKey,
+            parent: visited.parent,
+            input_data: [],
+            output_data: addrKey,
+          };
 
-    const addrKey = columns[visited.addr.col]+(visited.addr.row + 1);
-    datadict[String(addrKey)] = visitVal;
-    const curr = {
-      name: addrKey,
-      parent: visited.parent,
-      input_data: [],
-      output_data: addrKey
-    };
+          if (rootName.length < 1) {
+            rootName = addrKey;
+          }
 
-    if (rootName.length < 1) {
-      rootName = addrKey;
-    }
+          const hasFormula = hf.doesCellHaveFormula(visited.addr);
+          if (hasFormula) {
+            const formula = hf.getCellFormula(visited.addr);
+            if (formula.includes("SUM")) {
+              curr["function"] = "vector_sum";
+              // Child is a vector
+              // =SUM(C2:C5)
 
-    const hasFormula = hf.doesCellHaveFormula(visited.addr);
-    if (hasFormula) {
-      const formula = hf.getCellFormula(visited.addr);
-      if (formula.includes("SUM")) {
-        curr['function'] = 'vector_sum';
-        // Child is a vector
-        // =SUM(C2:C5)
+              curr["input_data"] = [formula.slice(4)];
+            }
+            if (formula.includes("AVERAGE")) {
+              curr["function"] = "mean";
+              // Child is a vector
+              // =AVERAGE(C2:C5)
 
-        curr['input_data'] = [formula.slice(4)];
-      }
-      if (formula.includes("AVERAGE")) {
-        curr['function'] = 'mean';
-        // Child is a vector
-        // =AVERAGE(C2:C5)
+              curr["input_data"] = [formula.slice(8)];
+            }
+            if (formula.includes("+")) {
+              curr["function"] = "scalar_sum";
+              // =B2-C2
+              curr["input_data"] = [formula.slice(1, 3), formula.slice(4, 6)];
+            }
+            if (formula.includes("-")) {
+              curr["function"] = "scalar_diff";
+              curr["input_data"] = [formula.slice(1, 3), formula.slice(4, 6)];
+            }
+          } else {
+            curr["function"] = "scalar";
+          }
 
-        curr['input_data'] = [formula.slice(8)];
-      }
-      if (formula.includes("+")) {
-        curr['function'] = 'scalar_sum';
-        // =B2-C2
-        curr['input_data'] = [formula.slice(1,3), formula.slice(4,6)];
-      }
-      if (formula.includes("-")) {
-        curr['function'] = 'scalar_diff';
-        curr['input_data'] = [formula.slice(1,3), formula.slice(4,6)];
-      }
-    } else {
-      curr['function'] = 'scalar';
-    }
+          nodes.push(curr);
 
-    nodes.push(curr);
+          // BFS
+          const precedents = hf.getCellPrecedents(visited.addr);
+          if (["vector_sum", "mean"].includes(curr["function"])) {
+            const rangeVals = hf.getRangeValues(precedents[0]);
+            const formattedVals = [];
+            for (let j = 0; j < rangeVals.length; j++) {
+              formattedVals[j] = rangeVals[j][0];
+            }
+            datadict[curr["input_data"]] = formattedVals;
+            const childNode = {
+              name: curr["input_data"],
+              parent: curr.name,
+              function: "vector",
+              input_data: [],
+              output_data: visitVal,
+            };
 
-    // BFS
-    const precedents = hf.getCellPrecedents(visited.addr)
-    if (['vector_sum', 'mean'].includes(curr['function'])) {
-      const rangeVals = hf.getRangeValues(precedents[0]);
-      const formattedVals = [];
-      for (let j=0; j<rangeVals.length; j++) {
-        formattedVals[j] = rangeVals[j][0];
-      }
-      datadict[curr['input_data']] = formattedVals
-      const childNode = {
-        name: curr['input_data'],
-        parent: curr.name,
-        function: 'vector',
-        input_data: [],
-        output_data: visitVal
+            nodes.push(childNode);
+          } else {
+            let p;
+            for (let i = 0; i < precedents.length; i++) {
+              p = precedents[i];
+              toVisit.push({ addr: p, parent: curr.name });
+            }
+          }
+
+          $.ajax({
+            type: "POST",
+            url: "/postSpecs",
+            data: JSON.stringify({ nodes, datadict, rootName }),
+            contentType: "application/json",
+
+            success: function (response_data) {
+              console.log("reloading iframe...");
+              $.ajax({
+                type: "GET",
+                url: "/chart.html",
+                success: function (htmlresponse) {
+                  document.getElementById("iFrameID").src =
+                    "data:text/html;charset=utf-8," + escape(htmlresponse);
+                },
+              });
+            },
+            error: function () {
+              console.log("request failed");
+            },
+          });
+        }
       };
 
-      nodes.push(childNode);
-    } else {
-      let p;
-      for (let i=0;i<precedents.length;i++) {
-        p = precedents[i];
-        toVisit.push({addr: p, parent: curr.name});
-      }
-    }
+      const afterFormulasValuesUpdate = (changes) => {
+        changes.forEach((change) => {
+          console.log("change", change.address, change.newValue);
 
-    $.ajax({ 
-      type: "POST",
-      url: "/postSpecs",
-      data: JSON.stringify({nodes, datadict, rootName}),
-      contentType: "application/json", 
+          console.log(
+            "precedents",
+            hf.getCellPrecedents({
+              sheet: change.address.sheet,
+              col: change.address.col,
+              row: change.address.row,
+            })
+          );
+        });
+      };
 
-      success: function(response_data){
-          console.log("reloading iframe...")
-          $.ajax({
-            type: 'GET',
-            url: "/chart.html",
-            success: function(htmlresponse) {
-              document.getElementById('iFrameID').src = "data:text/html;charset=utf-8," + escape(htmlresponse);
-            }
-          })
-      },
-      error: function() {
-          console.log("request failed");
-      }
-    })
-  }
-};
+      const whale = [
+        ["Day", "Hazard Rate", "Change in %"],
+        ["8/2", "8.0%", ""],
+        ["8/3", "10.0%", "=B3-B2"],
+        ["8/4", "13.0%", "=B4-B3"],
+        ["8/5", "18.0%", "=B5-B4"],
+        ["8/6", "13.0%", "=B6-B5"],
+        ["8/7", "11.0%", "=B7-B6"],
+        ["wrong", "$100/sum", "=100/sum(C3:C7)"],
+        ["right", "$100/sum", "=100/(AVERAGE(C3:C7))"],
+      ];
+      const example = [
+        ["Month", "Revenue", "Expense", "P/L"],
+        ["Jan", 450, 200, ""],
+        ["Feb", 300, 180, ""],
+        ["Mar", 240, 230, ""],
+        ["Apr", 350, 200, ""],
+        ["May", 300, 110, ""],
+        ["Jun", 240, 220, ""],
+        ["Jul", 420, 100, ""],
+        ["Aug", 400, 80, ""],
+        ["Sep", 440, 330, ""],
+        ["", "", "", ""],
+      ];
 
-const afterFormulasValuesUpdate = (changes) => {
-  changes.forEach((change) => {
-    console.log('change', change.address, change.newValue);
+      const hot = new Handsontable(container, {
+        data: whale,
+        rowHeaders: true,
+        colHeaders: true,
+        formulas: {
+          engine: hf,
+          sheetName: "Sheet1",
+        },
+        afterFormulasValuesUpdate,
+        licenseKey: "non-commercial-and-evaluation", // for non-commercial use only
+      });
 
-    console.log('precedents', hf.getCellPrecedents({ sheet: change.address.sheet, col: change.address.col, row: change.address.row}));
-  });
-};
+      const logSelectedDFG = () => {
+        const selectedCells = hot.getSelected();
+        if (selectedCells.length === 1) {
+          const startRow = selectedCells[0][0];
+          const startCol = selectedCells[0][1];
+          logDFG({ sheet: 0, col: startCol, row: startRow });
+        }
+      };
 
-const hot = new Handsontable(container, {
-  data: [
-    ['Month', 'Revenue', 'Expense', 'P/L'],
-    ['Jan', 450, 200, ''],
-    ['Feb', 300, 180, ''],
-    ['Mar', 240, 230, ''],
-    ['Apr', 350, 200, ''],
-    ['May', 300, 110, ''],
-    ['Jun', 240, 220, ''],
-    ['Jul', 420, 100, ''],
-    ['Aug', 400, 80, ''],
-    ['Sep', 440, 330, ''],
-    ['', '', '', '']
-  ],
-  rowHeaders: true,
-  colHeaders: true,
-  formulas: {
-    engine: hf,
-    sheetName: 'Sheet1',
-  },
-  afterFormulasValuesUpdate,
-  licenseKey: 'non-commercial-and-evaluation' // for non-commercial use only
-});
-
-const logSelectedDFG = () => {
-  const selectedCells = hot.getSelected();
-  if (selectedCells.length === 1) {
-    const startRow = selectedCells[0][0]
-    const startCol = selectedCells[0][1]
-    logDFG({sheet: 0, col: startCol, row: startRow})
-  }
-}
-
-
-
-window.onkeydown = function(event) {
-   if (event.ctrlKey) {
-      // If 'ctrl' is pressed, visualize currently selected
-    logSelectedDFG();
-   }
-}
-
-
+      window.onkeydown = function (event) {
+        if (event.ctrlKey) {
+          // If 'ctrl' is pressed, visualize currently selected
+          logSelectedDFG();
+        }
+      };
     </script>
   </body>
+</html>
