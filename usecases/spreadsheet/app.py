@@ -22,6 +22,10 @@ def index():
 def chart():
     return send_file("chart.html")
 
+@app.route("/berkeley.csv")
+def berkeley():
+    return send_file("berkeley.csv")
+
 @app.route("/postSpecs", methods = ["POST"])
 def getSpecs():
     nodes = request.get_json()['nodes']

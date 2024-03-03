@@ -5,6 +5,7 @@
       src="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.js"
     ></script>
     <script src="https://cdn.jsdelivr.net/npm/hyperformula/dist/hyperformula.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <script
       src="https://code.jquery.com/jquery-3.7.1.js"
       integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4="
@@ -31,6 +32,22 @@
       const container = document.querySelector("#example");
 
       const columns = ["A", "B", "C", "D"];
+
+      const logGroupDFG = (address) => {
+        // We can handle 1-d vectors and 2-d vectors
+        // But we don't use their equations, I don't think.
+        // Maybe we can handle it, just interpret it as vec<x>
+        // The question is, if there is a pattern in the equation
+        // can we pattern match it, and of course we could, but
+        // that's too much here.
+
+        // Format for our address is
+        // { sheet: 0, startCol, startRow, endCol, endRow }
+
+        // Need to check against the hyperformula format
+        // We want to get the cell values, and send them back
+
+      }
 
       const logDFG = (address) => {
         const datadict = {};
@@ -214,33 +231,53 @@
         ["Other", "2000-2010", "No", '', '', '', '', '', '', '', '', '', '', '']
       ]
 
-      const hot = new Handsontable(container, {
-        data: simpson,
-        rowHeaders: true,
-        colHeaders: true,
-        formulas: {
-          engine: hf,
-          sheetName: "Sheet1",
+      $.ajax({
+        type: "GET",
+        url: "/berkeley.csv",
+        dataType: "text",
+
+        success: function (berkeley_full) {
+          var parsedBerkeleyFull = Papa.parse(berkeley_full);
+          console.log("parsedBerkeleyFull is ", parsedBerkeleyFull)
+          const hot = new Handsontable(container, {
+            data: parsedBerkeleyFull.data,
+            rowHeaders: true,
+            colHeaders: true,
+            formulas: {
+              engine: hf,
+              sheetName: "Sheet1",
+            },
+            afterFormulasValuesUpdate,
+            licenseKey: "non-commercial-and-evaluation", // for non-commercial use only
+          });
+
+          const logSelectedDFG = () => {
+            const selectedCells = hot.getSelected();
+            if (selectedCells.length === 1) {
+              const startRow = selectedCells[0][0];
+              const startCol = selectedCells[0][1];
+              logDFG({ sheet: 0, col: startCol, row: startRow });
+            } else if selectedCells.length > 1 {
+              const startRow = selectedCells[0][0];
+              const startCol = selectedCells[0][1];
+              const endRow = selectedCells[1][0];
+              const endCol = selectedCells[1][1];
+              logGroupDFG({ sheet: 0, startCol, startRow, endCol, endRow });
+            }
+          };
+
+          window.onkeydown = function (event) {
+            if (event.ctrlKey) {
+              // If 'ctrl' is pressed, visualize currently selected
+              logSelectedDFG();
+            }
+          };
         },
-        afterFormulasValuesUpdate,
-        licenseKey: "non-commercial-and-evaluation", // for non-commercial use only
+        error: function () {
+          console.log("berkeley request failed");
+        },
       });
 
-      const logSelectedDFG = () => {
-        const selectedCells = hot.getSelected();
-        if (selectedCells.length === 1) {
-          const startRow = selectedCells[0][0];
-          const startCol = selectedCells[0][1];
-          logDFG({ sheet: 0, col: startCol, row: startRow });
-        }
-      };
-
-      window.onkeydown = function (event) {
-        if (event.ctrlKey) {
-          // If 'ctrl' is pressed, visualize currently selected
-          logSelectedDFG();
-        }
-      };
     </script>
   </body>
 </html>
