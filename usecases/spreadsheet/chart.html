@@ -2,23 +2,29 @@
 <html>
 <head>
   <style>
-    .error {
-        color: red;
+    #vis.vega-embed {
+      width: 100%;
+      display: flex;
+    }
+
+    #vis.vega-embed details,
+    #vis.vega-embed details summary {
+      position: relative;
     }
   </style>
-  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm//vega@5"></script>
-  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm//vega-lite@4.17.0"></script>
-  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm//vega-embed@6"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vega@5"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vega-lite@5.16.3"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
 </head>
 <body>
   <div id="vis"></div>
   <script>
     (function(vegaEmbed) {
-      var spec = {"config": {"view": {"continuousWidth": 400, "continuousHeight": 300}}, "layer": [{"data": {"name": "data-5294aa46eeaeaab718ff17dd4259fda1"}, "mark": "line", "encoding": {"color": {"condition": {"value": "yellow", "selection": "selector004"}, "field": "color", "legend": null, "scale": {"scheme": "category10"}, "type": "nominal"}, "tooltip": [{"field": "id", "type": "quantitative"}], "x": {"axis": {"labels": false, "title": ""}, "field": "x", "type": "quantitative"}, "x2": {"field": "x2"}, "y": {"axis": {"title": "(B2:B10)"}, "field": "y", "scale": {"domain": [0, 500]}, "type": "quantitative"}, "y2": {"field": "y2"}}, "height": 400.0, "selection": {"selector004": {"type": "single", "fields": ["id"], "on": "mouseover", "empty": "none"}}, "title": "Distributions of (B2:B10)", "width": 400.0}, {"data": {"name": "data-2f47466f95a67ca1299208db543dd6c6"}, "mark": {"type": "line", "opacity": 0.5, "strokeDash": [5, 3], "strokeWidth": 2}, "encoding": {"color": {"field": "color", "legend": null, "scale": {"scheme": "category10"}, "type": "nominal"}, "x": {"field": "x", "type": "quantitative"}, "y": {"field": "y", "type": "quantitative"}}}, {"data": {"name": "data-2f47466f95a67ca1299208db543dd6c6"}, "mark": {"type": "text", "align": "left", "baseline": "middle", "dx": 7, "fontSize": 20}, "encoding": {"color": {"field": "color", "legend": null, "scale": {"scheme": "category10"}, "type": "nominal"}, "text": {"value": "mean = 348.89"}, "x": {"field": "x", "type": "quantitative"}, "y": {"field": "y", "type": "quantitative"}}, "transform": [{"filter": "(datum.y > 0)"}]}, {"data": {"name": "data-f6af098ff072b26b36c860ae33c6d327"}, "mark": {"type": "line", "opacity": 0.5, "strokeDash": [5, 3], "strokeWidth": 2}, "encoding": {"color": {"field": "color", "legend": null, "scale": {"scheme": "category10"}, "type": "nominal"}, "x": {"field": "x", "type": "quantitative"}, "y": {"field": "y", "type": "quantitative"}}}, {"data": {"name": "data-f6af098ff072b26b36c860ae33c6d327"}, "mark": {"type": "text", "align": "left", "baseline": "middle", "dx": 7, "fontSize": 20}, "encoding": {"color": {"field": "color", "legend": null, "scale": {"scheme": "category10"}, "type": "nominal"}, "text": {"value": "median = 350.00"}, "x": {"field": "x", "type": "quantitative"}, "y": {"field": "y", "type": "quantitative"}}, "transform": [{"filter": "(datum.y > 0)"}]}], "$schema": "https://vega.github.io/schema/vega-lite/v4.17.0.json", "datasets": {"data-5294aa46eeaeaab718ff17dd4259fda1": [{"val": 240.0, "is_mean": false, "is_median": false, "id": 2, "x": 0, "color": "(B2:B10)", "y": 0, "x2": 0, "y2": 240.0}, {"val": 240.0, "is_mean": false, "is_median": false, "id": 5, "x": 1, "color": "(B2:B10)", "y": 0, "x2": 1, "y2": 240.0}, {"val": 300.0, "is_mean": false, "is_median": false, "id": 1, "x": 2, "color": "(B2:B10)", "y": 0, "x2": 2, "y2": 300.0}, {"val": 300.0, "is_mean": false, "is_median": false, "id": 4, "x": 3, "color": "(B2:B10)", "y": 0, "x2": 3, "y2": 300.0}, {"val": 348.8888888888889, "is_mean": true, "is_median": false, "id": 9, "x": 4, "color": "mean", "y": 0, "x2": 4, "y2": 348.8888888888889}, {"val": 350.0, "is_mean": false, "is_median": false, "id": 3, "x": 5, "color": "(B2:B10)", "y": 0, "x2": 5, "y2": 350.0}, {"val": 350.0, "is_mean": false, "is_median": true, "id": 10, "x": 6, "color": "median", "y": 0, "x2": 6, "y2": 350.0}, {"val": 400.0, "is_mean": false, "is_median": false, "id": 7, "x": 7, "color": "(B2:B10)", "y": 0, "x2": 7, "y2": 400.0}, {"val": 420.0, "is_mean": false, "is_median": false, "id": 6, "x": 8, "color": "(B2:B10)", "y": 0, "x2": 8, "y2": 420.0}, {"val": 440.0, "is_mean": false, "is_median": false, "id": 8, "x": 9, "color": "(B2:B10)", "y": 0, "x2": 9, "y2": 440.0}, {"val": 450.0, "is_mean": false, "is_median": false, "id": 0, "x": 10, "color": "(B2:B10)", "y": 0, "x2": 10, "y2": 450.0}], "data-2f47466f95a67ca1299208db543dd6c6": [{"x": 3.9, "y": 0.0, "color": "mean"}, {"x": 3.9, "y": 400.0, "color": "mean"}], "data-f6af098ff072b26b36c860ae33c6d327": [{"x": 6.1, "y": 0.0, "color": "median"}, {"x": 6.1, "y": 320.0, "color": "median"}]}};
+      var spec = {"config": {"view": {"continuousWidth": 300, "continuousHeight": 300}}, "data": {"name": "data-7e5508eb2bb95c44d14ece8a73b04886"}, "mark": {"type": "bar", "opacity": 1.0, "size": 150}, "encoding": {"x": {"axis": {"title": ""}, "field": "scalar_names", "type": "nominal"}, "y": {"axis": {"title": "magnitude"}, "field": "scalar_values", "type": "quantitative"}}, "height": 400.0, "title": "B4 - C4", "width": 400.0, "$schema": "https://vega.github.io/schema/vega-lite/v5.16.3.json", "datasets": {"data-7e5508eb2bb95c44d14ece8a73b04886": [{"scalar_values": 240, "scalar_names": "B4"}, {"scalar_values": 230, "scalar_names": "C4"}]}};
       var embedOpt = {"renderer": "svg", "mode": "vega-lite"};
 
       function showError(el, error){
-          el.innerHTML = ('<div class="error" style="color:red;">'
+          el.innerHTML = ('<div style="color:red;">'
                           + '<p>JavaScript Error: ' + error.message + '</p>'
                           + "<p>This usually means there's a typo in your chart specification. "
                           + "See the javascript console for the full traceback.</p>"

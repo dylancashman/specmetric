@@ -8,3 +8,6 @@ squarify
 jupyter
 flask
 altair_saver
+showast
+graphviz
+antigravity
