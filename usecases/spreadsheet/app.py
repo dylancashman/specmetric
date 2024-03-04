@@ -32,7 +32,7 @@ def chart():
 
 @app.route("/berkeley.csv")
 def berkeley():
-    return send_file("berkeley.csv")
+    return send_file("berkeley_with_calculations.csv")
 
 @app.route("/postSpecs", methods = ["POST"])
 def getSpecs():
