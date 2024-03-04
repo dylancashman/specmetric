@@ -7,6 +7,14 @@ module_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath('')))
 if module_path not in sys.path:
     sys.path.append(module_path)
 
+# Create experimental setup folder
+import datetime
+current_directory = os.getcwd()
+timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+final_directory = os.path.join(current_directory, 'experimental_images', timestamp)
+if not os.path.exists(final_directory):
+    os.makedirs(final_directory)
+
 # Load up specmetric
 from specmetric.parser import ComputationTreeParser
 from specmetric.computation_tree import ComputationNode
@@ -56,7 +64,9 @@ def getSpecs():
     vis_containers = parser.visualization_containers
     r = AltairRenderer(vis_containers, datadict)
     charts = r.convert_to_charts()
-    charts.save('chart.html', embed_options={'renderer':'svg'})
+    chart_timestamp_path = datetime.datetime.now().strftime("%Y%m%d_%H%M%S.html")
+    outpath = os.path.join(final_direcotry, chart_timestamp_path)
+    charts.save(outpath, embed_options={'renderer':'svg'})
 
     return {'reload': True}
 
