@@ -31,7 +31,7 @@
 
       const container = document.querySelector("#example");
 
-      const columns = ["A", "B", "C", "D"];
+      const columns = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N"];
 
       const logGroupDFG = (address) => {
         // We can handle 1-d vectors and 2-d vectors
@@ -42,11 +42,51 @@
         // that's too much here.
 
         // Format for our address is
-        // { sheet: 0, startCol, startRow, endCol, endRow }
+        // {start: {sheet: 0, col: startCol, row: startRow },
+        //  end: {sheet: 0, col: endCol, row: endRow }}
+        // We may want to throw away the headers somehow, or
+        // deal with that on the backend
 
         // Need to check against the hyperformula format
         // We want to get the cell values, and send them back
+        const rangeValues = hf.getRangeValues(address);
+        const datadict = {};
+        const startAddr = address['start'];
+        const endAddr = address['end'];
+        const startAddrKey = columns[startAddr.col] + (startAddr.row + 1);
+        const endAddrKey = columns[endAddr.col] + (endAddr.row + 1);
+        const addrKey = startAddrKey + ": " + endAddrKey;
+        
+        datadict[String(addrKey)] = rangeValues;
+        const node = {
+          name: addrKey,
+          parent: null,
+          function: "vector",
+          input_data: [],
+          output_data: addrKey,
+        };
 
+        $.ajax({
+          type: "POST",
+          url: "/postSpecs",
+          data: JSON.stringify({ nodes: [node], datadict, rootName: addrKey }),
+          contentType: "application/json",
+
+          success: function (response_data) {
+            console.log("reloading iframe...");
+            $.ajax({
+              type: "GET",
+              url: "/chart.html",
+              success: function (htmlresponse) {
+                document.getElementById("iFrameID").src =
+                  "data:text/html;charset=utf-8," + escape(htmlresponse);
+              },
+            });
+          },
+          error: function () {
+            console.log("request failed");
+          },
+        });
       }
 
       const logDFG = (address) => {
@@ -60,7 +100,6 @@
           debugTimer = debugTimer + 1;
           const visited = toVisit.shift();
           const visitVal = hf.getCellValue(visited.addr);
-          // const addrKey = "row" + visited.addr.row + "col" + visited.addr.col;
 
           const addrKey = columns[visited.addr.col] + (visited.addr.row + 1);
           datadict[String(addrKey)] = visitVal;
@@ -197,40 +236,6 @@
         ["", "", "", ""],
       ];
 
-      const simpson = [
-        ["Major", "Enrolled", "Graduated in 4 years", '', 'Major', 'BOTH-Total', 'BOTH-Graduated', 'BOTH-Percent', '2000-2010-Total', '2000-2010-Graduated', '2000-2010-Percent', '2010-2015-Total', '2010-2015-Graduated', '2010-2015-Percent'],
-        ["C", "2010-2015", "No", '', 'A', '=COUNTIF(A2:A31, E2)', '=COUNTIFS(A2:A31,E2,C2:C31,"Yes")', '=G2/F2', '=COUNTIFS(A2:A31, E2, B2:B31,"2000-2010")', '=COUNTIFS(A2:A31,E2,C2:C31,"Yes",  B2:B31,"2000-2010")', '=J2/I2', '=COUNTIFS(A2:A31, E2, B2:B31,"2010-2015")', '=COUNTIFS(A2:A31,E2,C2:C31,"Yes",  B2:B31,"2010-2015")', '=M2/L2'],
-        ["B", "2000-2010", "Yes", '', 'B', '=COUNTIF(A2:A31, E3)', '=COUNTIFS(A2:A31,E3,C2:C31,"Yes")', '=G3/F3', '=COUNTIFS(A2:A31, E3, B2:B31,"2000-2010")', '=COUNTIFS(A2:A31,E3,C2:C31,"Yes",  B2:B31,"2000-2010")', '=J3/I3', '=COUNTIFS(A2:A31, E3, B2:B31,"2010-2015")', '=COUNTIFS(A2:A31,E3,C2:C31,"Yes",  B2:B31,"2010-2015")', '=M3/L3'],
-        ["Other", "2010-2015", "Yes", '', 'C', '=COUNTIF(A2:A31, E4)', '=COUNTIFS(A2:A31,E4,C2:C31,"Yes")', '=G4/F4', '=COUNTIFS(A2:A31, E4, B2:B31,"2000-2010")', '=COUNTIFS(A2:A31,E4,C2:C31,"Yes",  B2:B31,"2000-2010")', '=J4/I4', '=COUNTIFS(A2:A31, E4, B2:B31,"2010-2015")', '=COUNTIFS(A2:A31,E4,C2:C31,"Yes",  B2:B31,"2010-2015")', '=M4/L4'],
-        ["Other", "2000-2010", "Yes", '', 'D', '=COUNTIF(A2:A31, E5)', '=COUNTIFS(A2:A31,E5,C2:C31,"Yes")', '=G5/F5', '=COUNTIFS(A2:A31, E5, B2:B31,"2000-2010")', '=COUNTIFS(A2:A31,E5,C2:C31,"Yes",  B2:B31,"2000-2010")', '=J5/I5', '=COUNTIFS(A2:A31, E5, B2:B31,"2010-2015")', '=COUNTIFS(A2:A31,E5,C2:C31,"Yes",  B2:B31,"2010-2015")', '=M5/L5'],
-        ["Other", "2000-2010", "No", '', 'E', '=COUNTIF(A2:A31, E6)', '=COUNTIFS(A2:A31,E6,C2:C31,"Yes")', '=G6/F6', '=COUNTIFS(A2:A31, E6, B2:B31,"2000-2010")', '=COUNTIFS(A2:A31,E6,C2:C31,"Yes",  B2:B31,"2000-2010")', '=J6/I6', '=COUNTIFS(A2:A31, E6, B2:B31,"2010-2015")', '=COUNTIFS(A2:A31,E6,C2:C31,"Yes",  B2:B31,"2010-2015")', '=M6/L6'],
-        ["Other", "2000-2010", "No", '', 'F', '=COUNTIF(A2:A31, E7)', '=COUNTIFS(A2:A31,E7,C2:C31,"Yes")', '=G7/F7', '=COUNTIFS(A2:A31, E7, B2:B31,"2000-2010")', '=COUNTIFS(A2:A31,E7,C2:C31,"Yes",  B2:B31,"2000-2010")', '=J7/I7', '=COUNTIFS(A2:A31, E7, B2:B31,"2010-2015")', '=COUNTIFS(A2:A31,E7,C2:C31,"Yes",  B2:B31,"2010-2015")', '=M7/L7'],
-        ["F", "2010-2015", "Yes", '', 'Total', '=ROWS(A2:A31)', '=COUNTIFS(C2:C31,"Yes")', '=G8/F8', '=COUNTIFS(B2:B31,"2000-2010")', '=COUNTIFS(C2:C31,"Yes",  B2:B31,"2000-2010")', '=J8/I8', '=COUNTIFS(B2:B31,"2010-2015")', '=COUNTIFS(C2:C31,"Yes",  B2:B31,"2010-2015")', '=M8/L8'],
-        ["Other", "2000-2010", "Yes", '', '', '', '', '', '', '', '', '', '', ''],
-        ["Other", "2000-2010", "No", '', '', '', '', '', '', '', '', '', '', ''],
-        ["A", "2000-2010", "Yes", '', '', '', '', '', '', '', '', '', '', ''],
-        ["Other", "2010-2015", "No", '', '', '', '', '', '', '', '', '', '', ''],
-        ["B", "2000-2010", "Yes", '', '', '', '', '', '', '', '', '', '', ''],
-        ["C", "2000-2010", "No", '', '', '', '', '', '', '', '', '', '', ''],
-        ["A", "2000-2010", "No", '', '', '', '', '', '', '', '', '', '', ''],
-        ["Other", "2000-2010", "No", '', '', '', '', '', '', '', '', '', '', ''],
-        ["Other", "2010-2015", "No", '', '', '', '', '', '', '', '', '', '', ''],
-        ["A", "2000-2010", "Yes", '', '', '', '', '', '', '', '', '', '', ''],
-        ["Other", "2010-2015", "Yes", '', '', '', '', '', '', '', '', '', '', ''],
-        ["Other", "2000-2010", "No", '', '', '', '', '', '', '', '', '', '', ''],
-        ["F", "2000-2010", "No", '', '', '', '', '', '', '', '', '', '', ''],
-        ["Other", "2000-2010", "No", '', '', '', '', '', '', '', '', '', '', ''],
-        ["C", "2000-2010", "Yes", '', '', '', '', '', '', '', '', '', '', ''],
-        ["C", "2010-2015", "No", '', '', '', '', '', '', '', '', '', '', ''],
-        ["Other", "2000-2010", "No", '', '', '', '', '', '', '', '', '', '', ''],
-        ["Other", "2010-2015", "No", '', '', '', '', '', '', '', '', '', '', ''],
-        ["Other", "2000-2010", "No", '', '', '', '', '', '', '', '', '', '', ''],
-        ["Other", "2000-2010", "No", '', '', '', '', '', '', '', '', '', '', ''],
-        ["Other", "2000-2010", "No", '', '', '', '', '', '', '', '', '', '', ''],
-        ["C", "2000-2010", "No", '', '', '', '', '', '', '', '', '', '', ''],
-        ["Other", "2000-2010", "No", '', '', '', '', '', '', '', '', '', '', '']
-      ]
-
       $.ajax({
         type: "GET",
         url: "/berkeley.csv",
@@ -252,17 +257,11 @@
           });
 
           const logSelectedDFG = () => {
-            const selectedCells = hot.getSelected();
-            if (selectedCells.length === 1) {
-              const startRow = selectedCells[0][0];
-              const startCol = selectedCells[0][1];
+            const [[startRow, startCol, endRow, endCol]] = hot.getSelected();
+            if (startRow == endRow && startCol == endCol) {
               logDFG({ sheet: 0, col: startCol, row: startRow });
-            } else if (selectedCells.length > 1) {
-              const startRow = selectedCells[0][0];
-              const startCol = selectedCells[0][1];
-              const endRow = selectedCells[1][0];
-              const endCol = selectedCells[1][1];
-              logGroupDFG({ sheet: 0, startCol, startRow, endCol, endRow });
+            } else if (endRow > startRow || endCol > startCol) {
+              logGroupDFG({ start: { sheet: 0, col: startCol, row: startRow}, end: { sheet: 0, col: endCol, row: endRow }});
             }
           };
 

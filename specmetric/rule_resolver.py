@@ -23,9 +23,3 @@ class VisualizationRule:
     # First, check if data types work
     
     self.valid = ('any' in child_compositions) or (self.parent_type in child_compositions)
-
-
-    # child_data_type = 
-    # if self.preferences
-
-

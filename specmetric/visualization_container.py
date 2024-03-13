@@ -21,6 +21,7 @@ class VisualizationContainer:
     self.compositions = compositions
     self.grammatical_expressions = grammatical_expressions
     self.matchedRule = False
+    print("in here, root_node is ", root_node)
     self.parseDFTree_preferences(root_node, initial=True)
     self.parse_chart(self.valid_chart, self.root_node.input_data, self.root_node.output_data)
 
@@ -154,6 +155,17 @@ class VisualizationContainer:
           'channels': 'scalar-location'
         }
       )
+    elif chart_type == 'dist_chart':
+      # Want to show the output values in a distribution
+      # greedily pick dots if no encoding is specified
+      print("output_data is ", output_data)
+      self.update_encoding(
+          output_data,
+          {
+            'mark': 'circle',
+            'channels': 'vector-location'          
+          }
+        )
     elif chart_type == 'mean_chart':
       if input_data[0] not in self.child_encodings:
         # Here, we arbitrarily choose lines if no encoding is specified

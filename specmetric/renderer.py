@@ -37,6 +37,8 @@ class AltairRenderer:
     - mean_chart
       - Shows each value in order of size
       - highlights mean and median
+    - dist_chart
+      - Shows distribution of values, either numeric or categorical
 
   Uses consistent scales across all visualizations, if possible
   Also tries to use unique IDs for post-hoc cross linking
@@ -190,6 +192,18 @@ class AltairRenderer:
           tooltip=tooltip_columns
         ).properties(width=total_width, height=total_height, title=title).add_selection(crosslinker)
         charts.append(ratio_plot)
+    elif (spec.valid_chart == 'dist_chart'):
+      for attr in vector_keys:
+        values = self.data_dict[attr];
+        # We want to show distribution of values
+        values_df = pd.DataFrame(data={'val': values})
+        dist_chart = alt.Chart(values_df).mark_bar().encode(
+          alt.X("val", bin=True),
+          y='count()',
+        ).properties(width=total_width, height=total_height, title=title
+              ).add_selection(crosslinker)
+        charts.append(dist_chart)
+
     elif (spec.valid_chart == 'mean_chart'):
       if (len(vector_keys) > 0):
         # We have a mean visualization

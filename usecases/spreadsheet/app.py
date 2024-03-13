@@ -40,6 +40,10 @@ def getSpecs():
     datadict = request.get_json()['datadict']
     rootName = request.get_json()['rootName']
 
+    # print("nodes: ", nodes)
+    # print("datadict:", datadict)
+    # print("rootName:", rootName)
+
     specmetric_nodes = {}
     for n in nodes:
         parent = None
@@ -59,13 +63,15 @@ def getSpecs():
         specmetric_nodes[name] = sn
 
     root = specmetric_nodes[rootName]
+    print("here, root is ", root)
     parser = ComputationTreeParser(root)
     parser.visualizeDFG()
     vis_containers = parser.visualization_containers
+    print("vis_containers is ", vis_containers)
     r = AltairRenderer(vis_containers, datadict)
     charts = r.convert_to_charts()
     chart_timestamp_path = datetime.datetime.now().strftime("%Y%m%d_%H%M%S.html")
-    outpath = os.path.join(final_direcotry, chart_timestamp_path)
+    outpath = os.path.join(final_directory, chart_timestamp_path)
     charts.save(outpath, embed_options={'renderer':'svg'})
 
     return {'reload': True}
