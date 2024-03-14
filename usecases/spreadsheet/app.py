@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, jsonify, send_file
+import glob
 import os
 import sys
 from pathlib import Path
@@ -28,7 +29,10 @@ def index():
 
 @app.route("/chart.html")
 def chart():
-    return send_file("chart.html")
+    list_of_files = glob.glob(os.path.join(final_directory, '*')) 
+    latest_file = max(list_of_files, key=os.path.getctime)
+    print(latest_file)
+    return send_file(latest_file)
 
 @app.route("/berkeley.csv")
 def berkeley():
