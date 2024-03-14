@@ -4,6 +4,8 @@ import altair as alt
 from altair import datum
 from specmetric.position_calculators.squarifier import squarify_within_bar
 from collections import OrderedDict
+from pandas.api.types import is_string_dtype
+from pandas.api.types import is_numeric_dtype
 
 class AltairRenderer:
   """
@@ -196,12 +198,24 @@ class AltairRenderer:
       for attr in vector_keys:
         values = self.data_dict[attr];
         # We want to show distribution of values
-        values_df = pd.DataFrame(data={'val': values})
-        dist_chart = alt.Chart(values_df).mark_bar().encode(
-          alt.X("val", bin=True),
-          y='count()',
-        ).properties(width=total_width, height=total_height, title=title
-              ).add_selection(crosslinker)
+        # We skip the header rows
+        values_df = pd.DataFrame(data={'val': values[2:]})
+
+        if (is_numeric_dtype(values_df.val)):
+          print("SEEING THIS AS NUMERIC")
+          dist_chart = alt.Chart(values_df).mark_bar().encode(
+            alt.X("val:Q", bin=True),
+            y='count()',
+          ).properties(width=total_width, height=total_height, title=title
+                ).add_selection(crosslinker)
+        else:
+          print("SEEING THIS AS NONNUMERIC")
+          dist_chart = alt.Chart(values_df).mark_bar().encode(
+            alt.X("val", bin=True),
+            y='count()',
+          ).properties(width=total_width, height=total_height, title=title
+                ).add_selection(crosslinker)
+
         charts.append(dist_chart)
 
     elif (spec.valid_chart == 'mean_chart'):

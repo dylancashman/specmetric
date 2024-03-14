@@ -6,6 +6,7 @@
     ></script>
     <script src="https://cdn.jsdelivr.net/npm/hyperformula/dist/hyperformula.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/underscore@1.13.6/underscore-umd-min.js"></script>
     <script
       src="https://code.jquery.com/jquery-3.7.1.js"
       integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4="
@@ -50,6 +51,7 @@
         // Need to check against the hyperformula format
         // We want to get the cell values, and send them back
         const rangeValues = hf.getRangeValues(address);
+        const flatRangeValues = _.flatten(rangeValues);
         const datadict = {};
         const startAddr = address['start'];
         const endAddr = address['end'];
@@ -57,7 +59,7 @@
         const endAddrKey = columns[endAddr.col] + (endAddr.row + 1);
         const addrKey = startAddrKey + ": " + endAddrKey;
         
-        datadict[String(addrKey)] = rangeValues;
+        datadict[String(addrKey)] = flatRangeValues;
         const node = {
           name: addrKey,
           parent: null,
