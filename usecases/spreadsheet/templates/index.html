@@ -22,9 +22,13 @@
     <div id="example"></div>
     <iframe
       id="iFrameID"
-      style="width: 700px; height: 700px; position: fixed; right: 100px;bottom: 100px; background: white"
+      style="width: 1200px; height: 700px; position: fixed; right: 100px;bottom: 100px; background: white"
       src="javascript:void(0);"
     ></iframe>
+    <div
+      id="generateVisMessage"
+      style="width: 200px; height: 200px; position: fixed; right: 100px;top: 100px; background: white"
+    >Highlight cell or cells of spreadsheet, and Press Ctrl to Generate Visualization</div>
     <script>
       const hf = HyperFormula.buildEmpty({
         licenseKey: "internal-use-in-handsontable",
@@ -117,6 +121,7 @@
           // Load the node to send to the server
           debugTimer = debugTimer + 1;
           const visited = toVisit.shift();
+
           const visitVal = hf.getCellValue(visited.addr);
 
           const addrKey = columns[visited.addr.col] + (visited.addr.row + 1);
@@ -149,6 +154,23 @@
 
               curr["input_data"] = [formula.slice(8)];
             }
+            if (formula.includes("COUNTIFS")) {
+              curr["function"] = "countifs";
+              // Child is a vector
+              // =COUNTIFS(A2:A2001,E5,C2:C2001,"Yes")
+              // =COUNTIFS(A2:A2001, E3)
+              conditions = formula.slice(9);
+              conditions = conditions.replace("(", "");
+              conditions = conditions.replace(")", "");
+              conditions = conditions.split(",");
+              // curr["input_data"] = conditions;
+              // We only want to record the source data as the input data, not the conditions, which are held in the odd slots
+              curr["input_data"] = _.groupBy(conditions, (v,i) => (i % 2 == 1))
+            }
+            if (formula.includes("ROWS")) {
+              curr["functions"] = "count";
+              curr["input_data"] = formula.slice(5);
+            }
             if (formula.includes("+")) {
               curr["function"] = "scalar_sum";
               // =B2-C2
@@ -156,6 +178,10 @@
             }
             if (formula.includes("-")) {
               curr["function"] = "scalar_diff";
+              curr["input_data"] = [formula.slice(1, 3), formula.slice(4, 6)];
+            }
+            if (formula.includes("/")) {
+              curr["function"] = "scalar_ratio";
               curr["input_data"] = [formula.slice(1, 3), formula.slice(4, 6)];
             }
           } else {
@@ -166,7 +192,7 @@
 
           // BFS
           const precedents = hf.getCellPrecedents(visited.addr);
-          if (["vector_sum", "mean"].includes(curr["function"])) {
+          if (["vector_sum", "mean", "countifs"].includes(curr["function"])) {
             const rangeVals = hf.getRangeValues(precedents[0]);
             const formattedVals = [];
             for (let j = 0; j < rangeVals.length; j++) {
@@ -189,6 +215,8 @@
               toVisit.push({ addr: p, parent: curr.name });
             }
           }
+
+          console.log("nodes is ", nodes);
 
           $.ajax({
             type: "POST",
@@ -261,16 +289,17 @@
 
         success: function (berkeley_full) {
           var parsedBerkeleyFull = Papa.parse(berkeley_full);
-          console.log("parsedBerkeleyFull is ", parsedBerkeleyFull)
+          // console.log("parsedBerkeleyFull is ", parsedBerkeleyFull)
           const hot = new Handsontable(container, {
-            data: parsedBerkeleyFull.data,
+            // data: parsedBerkeleyFull.data,
+            data: example,
             rowHeaders: true,
             colHeaders: true,
             formulas: {
               engine: hf,
               sheetName: "Sheet1",
             },
-            afterFormulasValuesUpdate,
+            // afterFormulasValuesUpdate,
             licenseKey: "non-commercial-and-evaluation", // for non-commercial use only
           });
 

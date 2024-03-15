@@ -70,6 +70,14 @@ expressions:
     input_data_type: vector
     output_data_type: scalar
     valid_visualization: mean_chart
+  count:
+    input_data_type: vector
+    output_data_type: scalar
+    valid_visualization: spacefilling_dot
+  countifs:
+    input_data_type: vector
+    output_data_type: scalar
+    valid_visualization: spacefilling_dot
   broadcast:
     input_data_type: scalar
     output_data_type: vector

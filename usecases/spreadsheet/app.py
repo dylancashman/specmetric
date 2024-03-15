@@ -44,8 +44,8 @@ def getSpecs():
     datadict = request.get_json()['datadict']
     rootName = request.get_json()['rootName']
 
-    # print("nodes: ", nodes)
-    # print("datadict:", datadict)
+    print("nodes: ", nodes)
+    print("datadict:", datadict)
     # print("rootName:", rootName)
 
     specmetric_nodes = {}
