@@ -162,7 +162,7 @@ class VisualizationContainer:
       self.update_encoding(
           output_data,
           {
-            'mark': 'circle',
+            'mark': 'line',
             'channels': 'vector-location'          
           }
         )

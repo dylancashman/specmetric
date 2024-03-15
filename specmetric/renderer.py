@@ -328,6 +328,8 @@ class AltairRenderer:
         # We have a mean visualization
         # We lay out the marks on an x axis in order of their value
         # and also draw the mean, annotated
+        print("vector_keys is ", vector_keys)
+
         for attr in vector_keys:
           values = self.data_dict[attr]
           if 'ids' in self.data_dict:
@@ -337,8 +339,9 @@ class AltairRenderer:
 
           mean_value = np.mean(values)
           median_value = np.median(values)
-
+          print("values is ", values)
           values_df = pd.DataFrame(data={'val': values, 'is_mean': False, 'is_median': False}, index=ids)
+          print("values_df is ", values_df)
           for input_var in self.input_vars:
             values_df[input_var] = self.data_dict[input_var]
 
@@ -363,11 +366,13 @@ class AltairRenderer:
 
           values_df.loc[len(values_df)] = mean_row
           values_df.loc[len(values_df)] = median_row
+          print("after mean median values_df is ", values_df)
 
           values_df = values_df.sort_values(by='val')
           values_df['id'] = values_df.index.values
           values_df = values_df.reset_index(drop=True)
           values_df['x'] = values_df.index.values # should give 0-indexed counter
+          print("after reindexing, values_df is ", values_df)
 
           tooltip_columns = sorted(list(set(values_df.columns.values) & set(self.input_vars + ['id'])))
 
@@ -378,6 +383,7 @@ class AltairRenderer:
           values_df['color'] = values_df.apply((lambda x: 'median' if x.is_median else x.color), axis=1)
 
           mark = spec.encodings[attr]['mark'] or 'square'
+          print("MARK is ", mark)
           if mark == 'line' and ((len(vector_keys) < 2) or ('skip' not in spec.encodings[attr])):
             values_df['y'] = 0
             values_df['x2'] = values_df['x']

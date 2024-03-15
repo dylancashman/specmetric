@@ -16,19 +16,25 @@
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.css"
     />
+    <style>
+      .highlighted {
+        font-weight: bold;
+        background: yellow;
+      }
+    </style>
   </head>
 
   <body>
     <div id="example"></div>
     <iframe
       id="iFrameID"
-      style="width: 900px; height: 400px; position: fixed; right: 100px;bottom: 100px; background: white"
+      style="width: 1500px; height: 600px; position: fixed; right: 100px;bottom: 100px; background: white"
       src="javascript:void(0);"
     ></iframe>
-<!--     <div
+    <div
       id="generateVisMessage"
       style="width: 200px; height: 200px; position: fixed; right: 100px;top: 100px; background: white"
-    >Highlight cell or cells of spreadsheet, and Press Ctrl to Generate Visualization</div> -->
+    >Highlight cell or cells of spreadsheet, and Press Ctrl to Generate Visualization</div>
     <script>
       const hf = HyperFormula.buildEmpty({
         licenseKey: "internal-use-in-handsontable",
@@ -37,6 +43,18 @@
       const container = document.querySelector("#example");
 
       const columns = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N"];
+
+      window.highlightCell = (address) => {
+        console.log("HIGHLIGHTING CELL WITH ADDRESS ", address);
+        if (address['start']) {
+          // highlighting a range
+        } else {
+          const col = address['col'];
+          const row = address['row'];
+          $('[aria-rowindex="7"] > [aria-colindex="7"]')
+
+        }
+      }
 
       const logGroupDFG = (address) => {
         // We can handle 1-d vectors and 2-d vectors
@@ -195,11 +213,11 @@
             }
             datadict[curr["input_data"]] = formattedVals;
             const childNode = {
-              name: curr["input_data"],
+              name: curr["input_data"][0],
               parent: curr.name,
               function: "vector",
               input_data: [],
-              output_data: visitVal,
+              output_data: curr["input_data"][0],
             };
 
             nodes.push(childNode);
@@ -251,6 +269,10 @@
                 success: function (htmlresponse) {
                   document.getElementById("iFrameID").src =
                     "data:text/html;charset=utf-8," + escape(htmlresponse);
+                  // console.log("$('.mark-group') is ", $('.mark-group'));
+                  // console.log("$('g.mark-group g.role-title-text') is ", $('g.mark-group g.role-title-text'));
+                  // $('g.mark-group g.role-title-text').hover(window.parent.highlightCell);
+                  // window.parent.highlightCell("B5");
                 },
               });
             },
@@ -289,16 +311,16 @@
       ];
       const example = [
         ["Month", "Revenue", "Expense", "P/L"],
-        ["Jan", 450, 200, ""],
-        ["Feb", 300, 180, ""],
-        ["Mar", 240, 230, ""],
-        ["Apr", 350, 200, ""],
-        ["May", 300, 110, ""],
-        ["Jun", 240, 220, ""],
-        ["Jul", 420, 100, ""],
-        ["Aug", 400, 80, ""],
-        ["Sep", 440, 330, ""],
-        ["", "", "", ""],
+        ["Jan", 450, 200, "=B2-C2"],
+        ["Feb", 300, 180, "=B3-C3"],
+        ["Mar", 240, 230, "=B4-C4"],
+        ["Apr", 350, 200, "=B5-C5"],
+        ["May", 300, 110, "=B6-C6"],
+        ["Jun", 240, 220, "=B7-C7"],
+        ["Jul", 420, 100, "=B8-C8"],
+        ["Aug", 400, 80, "=B9-C9"],
+        ["Sep", 440, 330, "=B10-C10"],
+        ["AVG", "=AVERAGE(B2:B10)", "=AVERAGE(C2:C10)", "=AVERAGE(D2:D10)"],
       ];
 
       $.ajax({
