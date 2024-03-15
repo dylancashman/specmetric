@@ -22,13 +22,13 @@
     <div id="example"></div>
     <iframe
       id="iFrameID"
-      style="width: 1200px; height: 700px; position: fixed; right: 100px;bottom: 100px; background: white"
+      style="width: 900px; height: 400px; position: fixed; right: 100px;bottom: 100px; background: white"
       src="javascript:void(0);"
     ></iframe>
-    <div
+<!--     <div
       id="generateVisMessage"
       style="width: 200px; height: 200px; position: fixed; right: 100px;top: 100px; background: white"
-    >Highlight cell or cells of spreadsheet, and Press Ctrl to Generate Visualization</div>
+    >Highlight cell or cells of spreadsheet, and Press Ctrl to Generate Visualization</div> -->
     <script>
       const hf = HyperFormula.buildEmpty({
         licenseKey: "internal-use-in-handsontable",
@@ -121,7 +121,7 @@
           // Load the node to send to the server
           debugTimer = debugTimer + 1;
           const visited = toVisit.shift();
-
+          console.log("visited is ", visited)
           const visitVal = hf.getCellValue(visited.addr);
 
           const addrKey = columns[visited.addr.col] + (visited.addr.row + 1);
@@ -155,7 +155,7 @@
               curr["input_data"] = [formula.slice(8)];
             }
             if (formula.includes("COUNTIFS")) {
-              curr["function"] = "countifs";
+              curr["function"] = "filter";
               // Child is a vector
               // =COUNTIFS(A2:A2001,E5,C2:C2001,"Yes")
               // =COUNTIFS(A2:A2001, E3)
@@ -165,7 +165,8 @@
               conditions = conditions.split(",");
               // curr["input_data"] = conditions;
               // We only want to record the source data as the input data, not the conditions, which are held in the odd slots
-              curr["input_data"] = _.groupBy(conditions, (v,i) => (i % 2 == 1))
+              curr["input_data"] = _.groupBy(conditions, (v,i) => (i % 2 == 0))["true"]
+              // curr["input_data"] = conditions
             }
             if (formula.includes("ROWS")) {
               curr["functions"] = "count";
@@ -192,7 +193,7 @@
 
           // BFS
           const precedents = hf.getCellPrecedents(visited.addr);
-          if (["vector_sum", "mean", "countifs"].includes(curr["function"])) {
+          if (["vector_sum", "mean", "count"].includes(curr["function"])) {
             const rangeVals = hf.getRangeValues(precedents[0]);
             const formattedVals = [];
             for (let j = 0; j < rangeVals.length; j++) {
@@ -208,6 +209,30 @@
             };
 
             nodes.push(childNode);
+          } else if (curr["function"] == "filter") {
+            // we might have multiple precedents
+            let i = 0;
+            for (const p of precedents) {
+              if (p['start']) {
+                const rangeVals = hf.getRangeValues(p);
+                const formattedVals = [];
+                for (let j = 0; j < rangeVals.length; j++) {
+                  formattedVals[j] = rangeVals[j][0];
+                }
+                console.log("i is ", i, " and curr['input_data'] is ", curr['input_data'])
+                const input_data_name = curr["input_data"][i]
+                datadict[input_data_name] = formattedVals;
+                const childNode = {
+                  name: input_data_name,
+                  parent: curr.name,
+                  function: "vector",
+                  input_data: [],
+                  output_data: input_data_name,
+                };
+                nodes.push(childNode);
+                i++;
+              }
+            }
           } else {
             let p;
             for (let i = 0; i < precedents.length; i++) {
@@ -291,8 +316,8 @@
           var parsedBerkeleyFull = Papa.parse(berkeley_full);
           // console.log("parsedBerkeleyFull is ", parsedBerkeleyFull)
           const hot = new Handsontable(container, {
-            // data: parsedBerkeleyFull.data,
-            data: example,
+            data: parsedBerkeleyFull.data,
+            // data: example,
             rowHeaders: true,
             colHeaders: true,
             formulas: {

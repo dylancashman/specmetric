@@ -41,6 +41,8 @@ class AltairRenderer:
       - highlights mean and median
     - dist_chart
       - Shows distribution of values, either numeric or categorical
+    - spacefilling_dot
+      - Shows distribution of values split into different buckets
 
   Uses consistent scales across all visualizations, if possible
   Also tries to use unique IDs for post-hoc cross linking
@@ -97,6 +99,8 @@ class AltairRenderer:
         scalar_data[attr] = self.data_dict[attr]
 
       if 'vector' in encodings['channels']:
+        print("attr is ", attr)
+        print("data_dict.keys() is ", self.data_dict.keys())
         vector_data[attr] = self.data_dict[attr]
 
       if 'skip' in encodings:
@@ -194,12 +198,122 @@ class AltairRenderer:
           tooltip=tooltip_columns
         ).properties(width=total_width, height=total_height, title=title).add_selection(crosslinker)
         charts.append(ratio_plot)
+    elif (spec.valid_chart == 'factor_chart'):
+      # first, need to divy up dimensions.  We can handle up to 3 vectors here
+      # first gets x
+      # next gets y
+      # last gets color
+      if (len(vector_keys) == 1):
+        # just a bar chart
+        values = self.data_dict[vector_keys[0]];
+        # We want to show distribution of values
+        # We skip the header rows
+        values_df = pd.DataFrame(data={'val': [v for v in values if (v is not None and v != '')]})
+
+        if (is_numeric_dtype(values_df.val)):
+          print("SEEING THIS AS NUMERIC")
+          dist_chart = alt.Chart(values_df).mark_bar().encode(
+            alt.X("val:Q", bin=True),
+            y='count()',
+          ).properties(width=total_width, height=total_height, title=title
+                ).add_selection(crosslinker)
+        else:
+          print("SEEING THIS AS NONNUMERIC")
+          value_counts = values_df.val.value_counts()
+          grouped_df = pd.DataFrame({'val': value_counts.index, 'amt': value_counts})
+          print("grouped_df.head()")
+          print(grouped_df.head())
+          dist_chart = alt.Chart(grouped_df).mark_bar().encode(
+            x='val',
+            y='amt'
+          ).properties(width=total_width, height=total_height, title=title
+                ).add_selection(crosslinker)
+
+        charts.append(dist_chart)
+      elif (len(vector_keys) == 2):
+        values_x = self.data_dict[vector_keys[0]];
+        values_y = self.data_dict[vector_keys[1]];
+        # We want to show distribution of values
+        # We skip the header rows
+        print("vector_keys is ", vector_keys)
+        print("values_x is ", values_x)
+        print("values_y is ", values_y)
+        values_df = pd.DataFrame(data={'values_x': [v for v in values_x if (v is not None and v != '')],
+                                      'values_y': [v for v in values_y if (v is not None and v != '')]})
+
+        if (is_numeric_dtype(values_df.values_x)):
+          print("SEEING THIS AS NUMERIC")
+          dist_chart = alt.Chart(values_df).mark_point().encode(
+            alt.X("values_x", bin=True),
+            alt.Y("values_y"),
+            size='count()',
+          ).properties(width=total_width, height=total_height, title=title
+                ).add_selection(crosslinker)
+        else:
+          print("SEEING THIS AS NONNUMERIC")
+          dist_chart = alt.Chart(values_df).mark_point().encode(
+            alt.X("values_x"),
+            alt.Y("values_y"),
+            size='count()',
+          ).properties(width=total_width, height=total_height, title=title
+                ).add_selection(crosslinker)
+          # # value_counts = values_df.val.value_counts()
+          # # grouped_df = pd.DataFrame({'val': value_counts.index, 'amt': value_counts})
+          # print("grouped_df.head()")
+          # print(grouped_df.head())
+          # dist_chart = alt.Chart(grouped_df).mark_bar().encode(
+          #   x='val',
+          #   y='amt'
+          # ).properties(width=total_width, height=total_height, title=title
+          #       ).add_selection(crosslinker)
+
+        charts.append(dist_chart)
+      elif (len(vector_keys) > 2):
+        values_x = self.data_dict[vector_keys[0]];
+        values_y = self.data_dict[vector_keys[1]];
+        values_color = self.data_dict[vector_keys[2]];
+        # We want to show distribution of values
+        # We skip the header rows
+        values_df = pd.DataFrame(data={'values_x': [v for v in values_x if (v is not None and v != '')],
+                                      'values_y': [v for v in values_y if (v is not None and v != '')],
+                                      'values_color': [v for v in values_color if (v is not None and v != '')]})
+
+        if (is_numeric_dtype(values_df.values_x)):
+          print("SEEING THIS AS NUMERIC")
+          dist_chart = alt.Chart(values_df).mark_point().encode(
+            alt.X("values_x", bin=True),
+            alt.Y("values_y"),
+            color='values_color',
+            size='count()',
+          ).properties(width=total_width, height=total_height, title=title
+                ).add_selection(crosslinker)
+        else:
+          print("SEEING THIS AS NONNUMERIC")
+          dist_chart = alt.Chart(values_df).mark_point().encode(
+            alt.X("values_x"),
+            alt.Y("values_y"),
+            color='values_color',
+            size='count()',
+          ).properties(width=total_width, height=total_height, title=title
+                ).add_selection(crosslinker)
+          # # value_counts = values_df.val.value_counts()
+          # # grouped_df = pd.DataFrame({'val': value_counts.index, 'amt': value_counts})
+          # print("grouped_df.head()")
+          # print(grouped_df.head())
+          # dist_chart = alt.Chart(grouped_df).mark_bar().encode(
+          #   x='val',
+          #   y='amt'
+          # ).properties(width=total_width, height=total_height, title=title
+          #       ).add_selection(crosslinker)
+
+        charts.append(dist_chart)
     elif (spec.valid_chart == 'dist_chart'):
+      # Need to add functionality for having two vectors, I guess?  Maybe we just show factor chart.
       for attr in vector_keys:
         values = self.data_dict[attr];
         # We want to show distribution of values
         # We skip the header rows
-        values_df = pd.DataFrame(data={'val': [v for v in values if (v is not None and v is not '')]})
+        values_df = pd.DataFrame(data={'val': [v for v in values if (v is not None and v != '')]})
 
         if (is_numeric_dtype(values_df.val)):
           print("SEEING THIS AS NUMERIC")
@@ -434,6 +548,10 @@ class AltairRenderer:
             )
             charts.append(mean_sqrt_line)
             charts.append(mean_sqrt_text)
+
+    elif (spec.valid_chart == 'spacefilling_dot'):
+
+      pass
 
     elif (spec.valid_chart == 'spacefilling'):
 

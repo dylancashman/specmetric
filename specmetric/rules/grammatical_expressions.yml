@@ -74,10 +74,12 @@ expressions:
     input_data_type: vector
     output_data_type: scalar
     valid_visualization: spacefilling_dot
-  countifs:
+  filter:
     input_data_type: vector
     output_data_type: scalar
-    valid_visualization: spacefilling_dot
+    valid_visualization: factor_chart
+    input_encoding_config:
+      channels: vector-location
   broadcast:
     input_data_type: scalar
     output_data_type: vector

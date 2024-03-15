@@ -166,6 +166,43 @@ class VisualizationContainer:
             'channels': 'vector-location'          
           }
         )
+    elif chart_type == 'spacefilling_dot':
+      self.update_encoding(
+        input_data,
+        {
+          'mark': 'circle',
+          'channels': 'vector-location'
+        }
+      )
+    elif chart_type == 'factor_chart':
+      # print("IN FILTER CHART TYPE")
+      # print("INPUT DATA", input_data)
+      # print("OUTPUT DATA", output_data)
+      # format of input data is funky: ['A2:A2001', 'E8', 'C2:C2001', '"Yes"']
+      # it's in pairs of <vector_data, filter value>
+      datarange = ''
+      value = ''
+      print("input_data is ", input_data)
+      # for (i, d) in enumerate(input_data):
+      #   if i % 2 == 0:
+      #     # starting a new pair
+      #     datarange = d
+      #   else:
+      #     # closing out a range
+      #     value = d
+      #     print("adding vector-location to ", datarange)
+      #     self.update_encoding(datarange,
+      #       { 
+      #         'mark': 'circle',
+      #         'channels': 'vector-location'
+      #       })
+      for d in input_data:
+        print("adding vector-location to ", d)
+        self.update_encoding(d,
+          { 
+            'mark': 'circle',
+            'channels': 'vector-location'
+          })
     elif chart_type == 'mean_chart':
       if input_data[0] not in self.child_encodings:
         # Here, we arbitrarily choose lines if no encoding is specified

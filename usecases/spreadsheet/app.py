@@ -56,6 +56,8 @@ def getSpecs():
         name = n['name']
         if len(name) == 1:
             name = name[0]
+        else:
+            print("NAME IS ", name)
         sn = ComputationNode(
             name, # name
             parent, # parent
