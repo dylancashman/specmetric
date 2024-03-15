@@ -199,7 +199,7 @@ class AltairRenderer:
         values = self.data_dict[attr];
         # We want to show distribution of values
         # We skip the header rows
-        values_df = pd.DataFrame(data={'val': values[2:]})
+        values_df = pd.DataFrame(data={'val': [v for v in values if (v is not None and v is not '')]})
 
         if (is_numeric_dtype(values_df.val)):
           print("SEEING THIS AS NUMERIC")

@@ -50,11 +50,27 @@
 
         // Need to check against the hyperformula format
         // We want to get the cell values, and send them back
-        const rangeValues = hf.getRangeValues(address);
-        const flatRangeValues = _.flatten(rangeValues);
-        const datadict = {};
+
+        // we make sure to skip the first row, it is the header row
+        // resulting in this ugly code
         const startAddr = address['start'];
         const endAddr = address['end'];
+        let rangeValues = null;
+        if (startAddr.row == -1) {
+          rangeValues = hf.getRangeValues({
+            start: { 
+              sheet: startAddr.sheet, 
+              col: startAddr.col,
+              row: startAddr.row + 2
+            },
+            end: endAddr
+          });
+        } else {
+          rangeValues = hf.getRangeValues(address);
+        }
+
+        const flatRangeValues = _.flatten(rangeValues);
+        const datadict = {};
         const startAddrKey = columns[startAddr.col] + (startAddr.row + 1);
         const endAddrKey = columns[endAddr.col] + (endAddr.row + 1);
         const addrKey = startAddrKey + ": " + endAddrKey;
