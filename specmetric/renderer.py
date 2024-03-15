@@ -130,10 +130,7 @@ class AltairRenderer:
           opacity = 0.1
 
         # # first, draw the scalar bars
-        if spec.valid_chart == 'bar_chart_diff':
-          title = "{} - {}".format(scalar_keys[0], scalar_keys[1])
-        else:
-          title = "{} / {}".format(scalar_keys[0], scalar_keys[1])
+        title = "Comparison of {} and {}".format(scalar_keys[0], scalar_keys[1])
         chart = alt.Chart(chart_data).mark_bar(opacity=opacity, size=bar_width).encode(
           x=alt.X('scalar_names', axis=alt.Axis(title='')),
           y=alt.Y('scalar_values', axis=alt.Axis(title='magnitude'))
@@ -205,24 +202,21 @@ class AltairRenderer:
       # last gets color
       if (len(vector_keys) == 1):
         # just a bar chart
+        title = "Frequency of Values in {}".format(vector_keys[0])
         values = self.data_dict[vector_keys[0]];
         # We want to show distribution of values
         # We skip the header rows
         values_df = pd.DataFrame(data={'val': [v for v in values if (v is not None and v != '')]})
 
         if (is_numeric_dtype(values_df.val)):
-          print("SEEING THIS AS NUMERIC")
           dist_chart = alt.Chart(values_df).mark_bar().encode(
             alt.X("val:Q", bin=True),
             y='count()',
           ).properties(width=total_width, height=total_height, title=title
                 ).add_selection(crosslinker)
         else:
-          print("SEEING THIS AS NONNUMERIC")
           value_counts = values_df.val.value_counts()
           grouped_df = pd.DataFrame({'val': value_counts.index, 'amt': value_counts})
-          print("grouped_df.head()")
-          print(grouped_df.head())
           dist_chart = alt.Chart(grouped_df).mark_bar().encode(
             x='val',
             y='amt'
@@ -231,18 +225,15 @@ class AltairRenderer:
 
         charts.append(dist_chart)
       elif (len(vector_keys) == 2):
+        title = "Counts of values in {} and {}".format(vector_keys[0], vector_keys[1])
         values_x = self.data_dict[vector_keys[0]];
         values_y = self.data_dict[vector_keys[1]];
         # We want to show distribution of values
         # We skip the header rows
-        print("vector_keys is ", vector_keys)
-        print("values_x is ", values_x)
-        print("values_y is ", values_y)
         values_df = pd.DataFrame(data={'values_x': [v for v in values_x if (v is not None and v != '')],
                                       'values_y': [v for v in values_y if (v is not None and v != '')]})
 
         if (is_numeric_dtype(values_df.values_x)):
-          print("SEEING THIS AS NUMERIC")
           dist_chart = alt.Chart(values_df).mark_point().encode(
             alt.X("values_x", bin=True),
             alt.Y("values_y"),
@@ -250,7 +241,6 @@ class AltairRenderer:
           ).properties(width=total_width, height=total_height, title=title
                 ).add_selection(crosslinker)
         else:
-          print("SEEING THIS AS NONNUMERIC")
           dist_chart = alt.Chart(values_df).mark_point().encode(
             alt.X("values_x"),
             alt.Y("values_y"),
@@ -269,6 +259,8 @@ class AltairRenderer:
 
         charts.append(dist_chart)
       elif (len(vector_keys) > 2):
+        title = "Comparison of values in {} and {} by {}".format(vector_keys[0], vector_keys[1], vector_keys[2])
+
         values_x = self.data_dict[vector_keys[0]];
         values_y = self.data_dict[vector_keys[1]];
         values_color = self.data_dict[vector_keys[2]];
@@ -279,7 +271,6 @@ class AltairRenderer:
                                       'values_color': [v for v in values_color if (v is not None and v != '')]})
 
         if (is_numeric_dtype(values_df.values_x)):
-          print("SEEING THIS AS NUMERIC")
           dist_chart = alt.Chart(values_df).mark_point().encode(
             alt.X("values_x", bin=True),
             alt.Y("values_y"),
@@ -288,7 +279,6 @@ class AltairRenderer:
           ).properties(width=total_width, height=total_height, title=title
                 ).add_selection(crosslinker)
         else:
-          print("SEEING THIS AS NONNUMERIC")
           dist_chart = alt.Chart(values_df).mark_point().encode(
             alt.X("values_x"),
             alt.Y("values_y"),
@@ -310,24 +300,21 @@ class AltairRenderer:
     elif (spec.valid_chart == 'dist_chart'):
       # Need to add functionality for having two vectors, I guess?  Maybe we just show factor chart.
       for attr in vector_keys:
+        title = "Frequency of Values in {}".format(vector_keys[0])
         values = self.data_dict[attr];
         # We want to show distribution of values
         # We skip the header rows
         values_df = pd.DataFrame(data={'val': [v for v in values if (v is not None and v != '')]})
 
         if (is_numeric_dtype(values_df.val)):
-          print("SEEING THIS AS NUMERIC")
           dist_chart = alt.Chart(values_df).mark_bar().encode(
             alt.X("val:Q", bin=True),
             y='count()',
           ).properties(width=total_width, height=total_height, title=title
                 ).add_selection(crosslinker)
         else:
-          print("SEEING THIS AS NONNUMERIC")
           value_counts = values_df.val.value_counts()
           grouped_df = pd.DataFrame({'val': value_counts.index, 'amt': value_counts})
-          print("grouped_df.head()")
-          print(grouped_df.head())
           dist_chart = alt.Chart(grouped_df).mark_bar().encode(
             x='val',
             y='amt'

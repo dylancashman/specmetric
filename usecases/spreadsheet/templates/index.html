@@ -146,15 +146,13 @@
               // =SUM(C2:C5)
 
               curr["input_data"] = [formula.slice(4)];
-            }
-            if (formula.includes("AVERAGE")) {
+            } else if (formula.includes("AVERAGE")) {
               curr["function"] = "mean";
               // Child is a vector
               // =AVERAGE(C2:C5)
 
               curr["input_data"] = [formula.slice(8)];
-            }
-            if (formula.includes("COUNTIFS")) {
+            } else if (formula.includes("COUNTIF")) {
               curr["function"] = "filter";
               // Child is a vector
               // =COUNTIFS(A2:A2001,E5,C2:C2001,"Yes")
@@ -167,21 +165,17 @@
               // We only want to record the source data as the input data, not the conditions, which are held in the odd slots
               curr["input_data"] = _.groupBy(conditions, (v,i) => (i % 2 == 0))["true"]
               // curr["input_data"] = conditions
-            }
-            if (formula.includes("ROWS")) {
+            } else if (formula.includes("ROWS")) {
               curr["functions"] = "count";
               curr["input_data"] = formula.slice(5);
-            }
-            if (formula.includes("+")) {
+            } else if (formula.includes("+")) {
               curr["function"] = "scalar_sum";
               // =B2-C2
               curr["input_data"] = [formula.slice(1, 3), formula.slice(4, 6)];
-            }
-            if (formula.includes("-")) {
+            } else if (formula.includes("-")) {
               curr["function"] = "scalar_diff";
               curr["input_data"] = [formula.slice(1, 3), formula.slice(4, 6)];
-            }
-            if (formula.includes("/")) {
+            } else if (formula.includes("/")) {
               curr["function"] = "scalar_ratio";
               curr["input_data"] = [formula.slice(1, 3), formula.slice(4, 6)];
             }
