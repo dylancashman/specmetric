@@ -210,9 +210,13 @@ class AltairRenderer:
                 ).add_selection(crosslinker)
         else:
           print("SEEING THIS AS NONNUMERIC")
-          dist_chart = alt.Chart(values_df).mark_bar().encode(
-            alt.X("val", bin=True),
-            y='count()',
+          value_counts = values_df.val.value_counts()
+          grouped_df = pd.DataFrame({'val': value_counts.index, 'amt': value_counts})
+          print("grouped_df.head()")
+          print(grouped_df.head())
+          dist_chart = alt.Chart(grouped_df).mark_bar().encode(
+            x='val',
+            y='amt'
           ).properties(width=total_width, height=total_height, title=title
                 ).add_selection(crosslinker)
 
