@@ -70,7 +70,7 @@ def getSpecs():
 
     root = specmetric_nodes[rootName]
     print("here, root is ", root)
-    parser = ComputationTreeParser(root)
+    parser = ComputationTreeParser(root, isSpreadsheet=True)
     parser.visualizeDFG()
     vis_containers = parser.visualization_containers
     print("vis_containers is ", vis_containers)

@@ -1,7 +1,7 @@
 from specmetric.visualization_container import VisualizationContainer
 from specmetric.rules_config import compositions as _compositions
 from specmetric.rules_config import grammatical_expressions as _grammatical_expressions
-
+from specmetric.rules_config import spreadsheet_grammatical_expressions as _spreadsheet_grammatical_expressions
 class ComputationTreeParser:
   """
   Parses the abstract syntax tree of a computation, where each node is a 
@@ -69,14 +69,18 @@ class ComputationTreeParser:
 
 
   # Instance methods
-  def __init__(self, computation_tree, compositions=_compositions, grammatical_expressions=_grammatical_expressions):
+  def __init__(self, computation_tree, compositions=_compositions, grammatical_expressions=_grammatical_expressions, isSpreadsheet=False):
     self.computation_tree = computation_tree
     # The dag is implemented as a list of lists - it's really a linked list
     # but where each node could be 1 or more visualizations where we can't
     # agree on what encoding to use, so we make multiple visualizations
     self.visualization_containers = []
+    if isSpreadsheet:
+      self.grammatical_expressions = _spreadsheet_grammatical_expressions
+    else:
+      self.grammatical_expressions = grammatical_expressions
+    
     self.compositions = compositions
-    self.grammatical_expressions = grammatical_expressions
 
   def visualizeDFG(self):
     """

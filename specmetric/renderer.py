@@ -41,8 +41,6 @@ class AltairRenderer:
       - highlights mean and median
     - dist_chart
       - Shows distribution of values, either numeric or categorical
-    - spacefilling_dot
-      - Shows distribution of values split into different buckets
 
   Uses consistent scales across all visualizations, if possible
   Also tries to use unique IDs for post-hoc cross linking
@@ -93,14 +91,11 @@ class AltairRenderer:
     total_height = 400.0
     total_width = 400.0
     title = ''
-
     for attr, encodings in spec.encodings.items():
       if 'scalar' in encodings['channels']:
         scalar_data[attr] = self.data_dict[attr]
 
       if 'vector' in encodings['channels']:
-        print("attr is ", attr)
-        print("data_dict.keys() is ", self.data_dict.keys())
         vector_data[attr] = self.data_dict[attr]
 
       if 'skip' in encodings:
@@ -247,15 +242,6 @@ class AltairRenderer:
             size='count()',
           ).properties(width=total_width, height=total_height, title=title
                 ).add_selection(crosslinker)
-          # # value_counts = values_df.val.value_counts()
-          # # grouped_df = pd.DataFrame({'val': value_counts.index, 'amt': value_counts})
-          # print("grouped_df.head()")
-          # print(grouped_df.head())
-          # dist_chart = alt.Chart(grouped_df).mark_bar().encode(
-          #   x='val',
-          #   y='amt'
-          # ).properties(width=total_width, height=total_height, title=title
-          #       ).add_selection(crosslinker)
 
         charts.append(dist_chart)
       elif (len(vector_keys) > 2):
@@ -286,15 +272,6 @@ class AltairRenderer:
             size='count()',
           ).properties(width=total_width, height=total_height, title=title
                 ).add_selection(crosslinker)
-          # # value_counts = values_df.val.value_counts()
-          # # grouped_df = pd.DataFrame({'val': value_counts.index, 'amt': value_counts})
-          # print("grouped_df.head()")
-          # print(grouped_df.head())
-          # dist_chart = alt.Chart(grouped_df).mark_bar().encode(
-          #   x='val',
-          #   y='amt'
-          # ).properties(width=total_width, height=total_height, title=title
-          #       ).add_selection(crosslinker)
 
         charts.append(dist_chart)
     elif (spec.valid_chart == 'dist_chart'):
@@ -328,7 +305,6 @@ class AltairRenderer:
         # We have a mean visualization
         # We lay out the marks on an x axis in order of their value
         # and also draw the mean, annotated
-        print("vector_keys is ", vector_keys)
 
         for attr in vector_keys:
           values = self.data_dict[attr]
@@ -339,9 +315,7 @@ class AltairRenderer:
 
           mean_value = np.mean(values)
           median_value = np.median(values)
-          print("values is ", values)
           values_df = pd.DataFrame(data={'val': values, 'is_mean': False, 'is_median': False}, index=ids)
-          print("values_df is ", values_df)
           for input_var in self.input_vars:
             values_df[input_var] = self.data_dict[input_var]
 
@@ -366,13 +340,11 @@ class AltairRenderer:
 
           values_df.loc[len(values_df)] = mean_row
           values_df.loc[len(values_df)] = median_row
-          print("after mean median values_df is ", values_df)
 
           values_df = values_df.sort_values(by='val')
           values_df['id'] = values_df.index.values
           values_df = values_df.reset_index(drop=True)
           values_df['x'] = values_df.index.values # should give 0-indexed counter
-          print("after reindexing, values_df is ", values_df)
 
           tooltip_columns = sorted(list(set(values_df.columns.values) & set(self.input_vars + ['id'])))
 
@@ -383,7 +355,6 @@ class AltairRenderer:
           values_df['color'] = values_df.apply((lambda x: 'median' if x.is_median else x.color), axis=1)
 
           mark = spec.encodings[attr]['mark'] or 'square'
-          print("MARK is ", mark)
           if mark == 'line' and ((len(vector_keys) < 2) or ('skip' not in spec.encodings[attr])):
             values_df['y'] = 0
             values_df['x2'] = values_df['x']
@@ -403,9 +374,6 @@ class AltairRenderer:
             charts.append(line_plot)
 
           if mark == 'bar-compare':
-            # We need to get the 'skip' attributes (bars) and place 
-            # them according to this attribute
-
             # we draw small bars at each point
             bar_width = 0.25
             ratio_bar_dataframes = []
@@ -542,10 +510,6 @@ class AltairRenderer:
             charts.append(mean_sqrt_line)
             charts.append(mean_sqrt_text)
 
-    elif (spec.valid_chart == 'spacefilling_dot'):
-
-      pass
-
     elif (spec.valid_chart == 'spacefilling'):
 
       if (len(vector_data.keys()) > 0):
@@ -660,7 +624,6 @@ class AltairRenderer:
 
 
         # Then, squares if they exist, or lines if they exist and squares don't
-        # Then, squares if they exist
         if 'squarediff' in scatter_data.columns.values:
           scatter_data['squarex2'] = scatter_data['x'] + scatter_data['squarediff']
           scatter_data['squarey2'] = scatter_data['y'] + scatter_data['squarediff']
@@ -672,15 +635,12 @@ class AltairRenderer:
             y2=alt.Y2('squarey2'),
             tooltip=tooltip_columns,
             color=alt.condition(crosslinker, alt.value('yellow'), alt.Color('color', scale=categorical_color_scale, legend=None)),
-            # color=alt.Color('color', scale=categorical_color_scale, legend=None),
           ).properties(width=total_width, height=total_height, title=title).add_selection(crosslinker)
           charts.append(square_plot)
           # realign the axes
           max_pixel = scatter_data[['x', 'y', 'squarex2', 'squarey2']].max().max() * 1.1
-          # self.vector_scale.domain = [0,max_pixel]
 
         elif ('linediff' in scatter_data.columns.values) and (len(bar_attrs) == 0):
-        # elif ('linediff' in scatter_data.columns.values):
           scatter_data['liney2'] = scatter_data['y'] + scatter_data['linediff']
           title = "Magnitudes of {}".format(line_attrs[0])
           line_plot = alt.Chart(scatter_data).mark_line().encode(
@@ -694,7 +654,6 @@ class AltairRenderer:
           charts.append(line_plot)
           # realign the axes
           max_pixel = scatter_data[['x', 'y', 'liney2']].max().max() * 1.1
-          # self.vector_scale.domain = [0,max_pixel]
 
         if len(bar_attrs) > 0:
           # we draw small bars at each point
@@ -716,10 +675,8 @@ class AltairRenderer:
             y=alt.Y('y-ratio', scale=self.vector_scale),
             x2=alt.X2('x2-ratio'),
             y2=alt.Y2('y2-ratio'),
-            # color=alt.Color('color-ratio', scale=categorical_color_scale, legend=None),
             color=alt.condition(crosslinker, alt.value('yellow'), alt.Color('color-ratio', scale=categorical_color_scale, legend=None)), 
           ).add_selection(crosslinker)
-          # )
           charts.append(bar_plot)
 
       y_equals_x_data = pd.DataFrame(data={'x': self.vector_scale.domain, 'y': self.vector_scale.domain})

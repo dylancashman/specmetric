@@ -21,7 +21,6 @@ class VisualizationContainer:
     self.compositions = compositions
     self.grammatical_expressions = grammatical_expressions
     self.matchedRule = False
-    print("in here, root_node is ", root_node)
     self.parseDFTree_preferences(root_node, initial=True)
     self.parse_chart(self.valid_chart, self.root_node.input_data, self.root_node.output_data)
 
@@ -158,7 +157,6 @@ class VisualizationContainer:
     elif chart_type == 'dist_chart':
       # Want to show the output values in a distribution
       # greedily pick dots if no encoding is specified
-      print("output_data is ", output_data)
       self.update_encoding(
           output_data,
           {
@@ -182,7 +180,6 @@ class VisualizationContainer:
       # it's in pairs of <vector_data, filter value>
       datarange = ''
       value = ''
-      print("input_data is ", input_data)
       # for (i, d) in enumerate(input_data):
       #   if i % 2 == 0:
       #     # starting a new pair
@@ -197,7 +194,6 @@ class VisualizationContainer:
       #         'channels': 'vector-location'
       #       })
       for d in input_data:
-        print("adding vector-location to ", d)
         self.update_encoding(d,
           { 
             'mark': 'circle',

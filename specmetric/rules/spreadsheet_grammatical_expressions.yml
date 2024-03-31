@@ -65,10 +65,21 @@ expressions:
   vector:
     input_data_type: any
     output_data_type: vector
+    valid_visualization: dist_chart
   mean:
     input_data_type: vector
     output_data_type: scalar
     valid_visualization: mean_chart
+  count:
+    input_data_type: vector
+    output_data_type: scalar
+    valid_visualization: spacefilling_dot
+  filter:
+    input_data_type: vector
+    output_data_type: scalar
+    valid_visualization: factor_chart
+    input_encoding_config:
+      channels: vector-location
   broadcast:
     input_data_type: scalar
     output_data_type: vector

@@ -1,4 +1,5 @@
 compositions:
+# compositions are hardcoded in this implementation.
 #   spacefilling:
 #     compatible_children:
 #       - 
