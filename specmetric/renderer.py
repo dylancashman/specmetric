@@ -395,6 +395,7 @@ class AltairRenderer:
               y2=alt.Y2('y2-ratio'),
               # color=alt.Color('color-ratio', scale=categorical_color_scale, legend=None),
               color=alt.condition(crosslinker, alt.value('yellow'), alt.Color('color-ratio', scale=categorical_color_scale, legend=None)), 
+            ).properties(width=total_width, height=total_height, title=title
             ).add_selection(crosslinker)
             # )
             mean_x_location = values_df[values_df['is_mean']].iloc[0].x
@@ -422,7 +423,7 @@ class AltairRenderer:
               y2=alt.Y2('y2'),
               tooltip=tooltip_columns,
               color=alt.condition(crosslinker, alt.value('yellow'), alt.Color('color', scale=categorical_color_scale, legend=None)),
-            ).properties(height=total_height, title=title).add_selection(crosslinker)
+            ).properties(width=total_width, height=total_height, title=title).add_selection(crosslinker)
             charts.append(line_plot)
             mean_x_location = values_df[values_df['is_mean']].iloc[0].squarex
             median_x_location = values_df[values_df['is_median']].iloc[0].squarex
@@ -656,15 +657,20 @@ class AltairRenderer:
           max_pixel = scatter_data[['x', 'y', 'liney2']].max().max() * 1.1
 
         if len(bar_attrs) > 0:
+          # We need to do a little geometry here to put the lines in the most interpretable place
+
+
           # we draw small bars at each point
           bar_width = 5
           ratio_bar_dataframes = []
           for i, bar_type in enumerate(bar_attrs):
             ratio_bar_data = pd.DataFrame()
             ratio_bar_data['x-ratio'] = scatter_data['x'] + (i*bar_width)
-            ratio_bar_data['y-ratio'] = scatter_data['y']
             ratio_bar_data['x2-ratio'] = scatter_data['x'] + ((i+1)*bar_width)
-            ratio_bar_data['y2-ratio'] = scatter_data['y'] - scatter_data[bar_type]
+            ratio_bar_data['y-ratio'] = scatter_data['x']
+            ratio_bar_data['y2-ratio'] = scatter_data.apply(lambda d: (d['x'] - d[bar_type]) if ((d['x'] > d['y']) or (d[bar_type] == d['x'])) else (d['x'] + d[bar_type]), axis=1)
+            # ratio_bar_data['y-ratio'] = scatter_data['y']
+            # ratio_bar_data['y2-ratio'] = scatter_data['y'] - scatter_data[bar_type]
             ratio_bar_data['color-ratio'] = bar_type
             ratio_bar_data['id'] = self.data_dict['ids']
             ratio_bar_dataframes.append(ratio_bar_data)
@@ -676,6 +682,7 @@ class AltairRenderer:
             x2=alt.X2('x2-ratio'),
             y2=alt.Y2('y2-ratio'),
             color=alt.condition(crosslinker, alt.value('yellow'), alt.Color('color-ratio', scale=categorical_color_scale, legend=None)), 
+          ).properties(width=total_width, height=total_height, title=title
           ).add_selection(crosslinker)
           charts.append(bar_plot)
 
