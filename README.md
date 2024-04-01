@@ -2,7 +2,7 @@
 
 Package to generate visualizations from computational data.
 
-Supplemental Material 2024 CHI Submission ID 6165
+Supplemental Material 2024 VIS Submission ID 1556
 
 Will be open sourced once this corresponding work is published.
 
@@ -26,4 +26,4 @@ Then run all cells.  It should create interactive visualizations as seen in the 
 	cd usecases/spreadsheet
 	python app.py
 
-This runs a simple flask server, and if you navigate to the corresponding localhost url, you will see an editable spreadsheet.  It only matches four types of operations: SUM(), AVERAGE(), and +s and -s.
+This runs a simple flask server, and if you navigate to the corresponding localhost url, you will see an editable spreadsheet.  It only matches five types of operations: SUM(), AVERAGE(), COUNTIF(), and +s and -s.
